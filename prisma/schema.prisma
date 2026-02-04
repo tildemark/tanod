@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id            String       @id @default(uuid())
+  name          String       // Company name
+  slug          String       @unique // URL-friendly name
+  logo          String?      // Logo URL/path
+  address       String?      // Physical address
+  city          String?      
+  country       String?      
+  phone         String?      // Contact phone
+  email         String?      // Contact email
+  website       String?      // Company website
+  dpoName       String?      // Data Protection Officer name
+  dpoEmail      String?      // DPO email
+  industry      String?      // Industry classification
+  employeeCount Int?         // Number of employees
+  description   String?      // Company description
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  departments   Department[]
+
+  @@map("organizations")
+}
+
+
+model Department {
+  id        String       @id @default(uuid())
+  name      String       // e.g. "HR", "Marketing"
+  description String?    // Department description
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  processes Process[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("departments")
+}
+
+// The Core ROPA Entry
+model Process {
+  id              String     @id @default(uuid())
+  deptId          String
+  department      Department @relation(fields: [deptId], references: [id], onDelete: Cascade)
+  
+  title           String     // e.g. "Employee Payroll"
+  description     String?
+  
+  // The 5 Pillars of ROPA
+  dataSubjects    String[]   // e.g. ["Employees", "Consultants"]
+  dataCategories  String[]   // e.g. ["Financial", "Personal Info"]
+  lawfulBasis     String     // e.g. "Legal Obligation", "Consent"
+  recipients      String[]   // e.g. ["Bank", "BIR"]
+  retentionPeriod String     // e.g. "5 Years after separation"
+  
+  status          String     @default("DRAFT") // DRAFT, REVIEW, APPROVED
+  riskLevel       String?    // LOW, MEDIUM, HIGH (Calculated later)
+  
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@map("processes")
+}

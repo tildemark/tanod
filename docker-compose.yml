@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: tanod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tanod
+      POSTGRES_PASSWORD: tanod123
+      POSTGRES_DB: tanod
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
