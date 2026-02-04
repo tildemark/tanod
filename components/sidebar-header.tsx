@@ -59,6 +59,15 @@ export function SidebarHeader() {
         </>
       ) : (
         <>
+          <div className="flex justify-center mb-3">
+            <Image
+              src="/tanod-logo.svg"
+              alt="TANOD Logo"
+              width={48}
+              height={48}
+              priority
+            />
+          </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-800">TANOD</h1>
           <p className="text-xs text-slate-600">DPO Compliance Platform</p>
         </>

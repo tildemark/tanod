@@ -26,9 +26,15 @@ model Organization {
   industry      String?      // Industry classification
   employeeCount Int?         // Number of employees
   description   String?      // Company description
+  
+  // Breach notification settings
+  npcNotificationEmail String? @default("privacy.complaints@privacy.gov.ph") // NPC email for breach notification
+  breachNotificationHours Int? @default(72) // Hours to notify NPC (default 72)
+  
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   departments   Department[]
+  incidents     Incident[]
 
   @@map("organizations")
 }
@@ -70,4 +76,34 @@ model Process {
   updatedAt       DateTime   @updatedAt
 
   @@map("processes")
+}
+
+// Breach Incident Model
+model Incident {
+  id                   String       @id @default(uuid())
+  orgId                String
+  org                  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  title                String       // Incident title
+  occurrenceDate       DateTime     // When the breach occurred
+  discoveryDate        DateTime     @default(now()) // When it was discovered
+  severity             String       // LOW, MEDIUM, HIGH, CRITICAL
+  impactedIndividuals  Int?         // Number of affected people
+  systemsAffected      String?      // Systems/databases affected
+  summary              String?      @db.Text // Detailed description
+  
+  // Workflow
+  status               String       @default("REPORTED") // REPORTED, ASSESSING, NOTIFYING, RESOLVED
+  assignedTo           String?      // Person responsible (for now, just a name)
+  npcNotified          Boolean      @default(false) // Has NPC been notified?
+  npcNotificationDate  DateTime?    // When NPC was notified
+  
+  // Resolution
+  resolutionNotes      String?      @db.Text
+  resolvedAt           DateTime?
+  
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+
+  @@map("incidents")
 }

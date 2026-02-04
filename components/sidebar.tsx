@@ -1,4 +1,5 @@
 import { Home, FolderOpen, AlertTriangle, Shield, Settings } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
@@ -81,9 +82,17 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="text-xs font-medium text-slate-600 mb-3">AI Status</div>
         <AIStatus />
         <Separator className="my-3" />
-        <div className="text-xs text-slate-500 text-center py-2">
-          <p className="font-semibold text-slate-700">TANOD</p>
-          <p>DPO Compliance Platform</p>
+        <div className="flex flex-col items-center text-center py-2 gap-2">
+          <Image
+            src="/tanod-logo.svg"
+            alt="TANOD Logo"
+            width={32}
+            height={32}
+          />
+          <div>
+            <p className="text-xs font-semibold text-slate-700">TANOD</p>
+            <p className="text-xs text-slate-500">DPO Compliance Platform</p>
+          </div>
         </div>
       </div>
     </div>

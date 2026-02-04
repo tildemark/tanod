@@ -1,6 +1,6 @@
 {
   "name": "tanod",
-  "version": "0.1.0-wip",
+  "version": "0.1.1-wip",
   "description": "TANOD: Philippine DPO Compliance Platform for ROPA Management and Risk Assessment",
   "private": true,
   "scripts": {

@@ -40,6 +40,8 @@ export const organizationAdminSchema = z.object({
   industry: z.string().optional(),
   employeeCount: z.string().transform(v => v ? parseInt(v) : undefined).optional(),
   description: z.string().optional(),
+  npcNotificationEmail: z.string().email('Invalid email').optional().or(z.literal('')),
+  breachNotificationHours: z.string().transform(v => v ? parseInt(v) : undefined).optional(),
 })
 
 export type OrganizationAdminFormData = z.infer<typeof organizationAdminSchema>

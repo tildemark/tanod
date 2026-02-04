@@ -5,7 +5,71 @@ All notable changes to TANOD (DPO Compliance Platform) will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2026-02-04
+## [0.1.1-wip] - 2026-02-04
+
+### Added
+
+#### Feature Dashboard Pages
+- **Risk Assessment Dashboard** (`/risk`)
+  - Real-time risk distribution statistics
+  - High/Medium/Low risk counts and percentages
+  - Visual risk distribution bar chart
+  - Recommended actions based on risk profile
+  - Processes ranked by risk level
+  - Filter and sort by risk severity
+  
+- **Breach Monitor Page** (`/breach`)
+  - Incident reporting dialog with full form validation
+  - Track open incidents and critical alerts
+  - 72-hour NPC notification window tracking
+  - Incident list with severity and status badges
+  - Real-time incident statistics
+  
+- **My ROPA List** (`/ropa`)
+  - Comprehensive process list view
+  - Department-wide statistics
+  - Approved vs Draft/Review counts
+  - Full table with filtering and sorting
+
+#### Breach Incident Management (Database-Ready)
+- Incident database model with comprehensive fields:
+  - Title, occurrence date, discovery date
+  - Severity levels (LOW, MEDIUM, HIGH, CRITICAL)
+  - Impacted individuals count
+  - Systems affected tracking
+  - Detailed summary/description
+- Workflow states: REPORTED → ASSESSING → NOTIFYING → RESOLVED
+- NPC notification tracking (date, status)
+- Server actions for full CRUD operations
+- Report incident dialog with validation
+
+#### Organization Breach Settings
+- **Breach Settings Page** (`/admin/breach-settings`)
+  - Configure NPC notification email (default: privacy.complaints@privacy.gov.ph)
+  - Set notification window (default: 72 hours)
+  - Philippine Data Privacy Act reference information
+  - NPC Circular 16-03 compliance guidance
+
+#### Visual Enhancements
+- TANOD SVG logo created (shield with data subject icon)
+- Logo displayed as fallback when no company logo uploaded
+- Logo shown in sidebar footer for branding consistency
+- Professional shield design with Philippine DPA theme
+
+### Changed
+- Updated sidebar header to show TANOD logo when no company logo
+- Enhanced sidebar footer with logo and branding
+- Organization schema extended with breach notification fields
+- Improved breach monitor with real incident data instead of placeholders
+
+### Technical
+- Added Incident model to Prisma schema
+- Created incident server actions (create, read, update, delete)
+- Extended Organization model with NPC notification settings
+- Updated schemas to support breach notification configuration
+- Database migration for new incident tracking
+
+## [0.1.0-wip] - 2026-02-04
 
 ### Added
 
