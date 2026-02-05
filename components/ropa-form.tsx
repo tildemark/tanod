@@ -29,7 +29,7 @@ export function RopaForm({ departments }: RopaFormProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState('basics')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { answer, loading, consult } = useSilipConsult()
+  const { answer, loading, error, consult } = useSilipConsult()
 
   const {
     register,
@@ -139,7 +139,7 @@ export function RopaForm({ departments }: RopaFormProps) {
           </div>
 
           {/* SILIP Compliance Tip */}
-          {(loading || answer) && (
+          {(loading || answer || error) && (
             <Card className="bg-blue-50 border-blue-200">
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -153,6 +153,8 @@ export function RopaForm({ departments }: RopaFormProps) {
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Consulting Philippine Data Privacy laws...
                   </div>
+                ) : error ? (
+                  <p className="text-sm text-red-600">{error}</p>
                 ) : (
                   <p className="text-sm text-slate-700">{answer}</p>
                 )}

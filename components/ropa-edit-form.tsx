@@ -12,7 +12,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader2 } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Loader2, Lightbulb } from 'lucide-react'
+import { useSilipConsult } from '@/hooks/useSilipConsult'
 
 interface Department {
   id: string
@@ -42,6 +44,7 @@ export function RopaEditForm({ departments, process }: RopaEditFormProps) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState('basics')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { answer, loading, error, consult } = useSilipConsult()
 
   const {
     register,
@@ -69,6 +72,13 @@ export function RopaEditForm({ departments, process }: RopaEditFormProps) {
   const [selectedDataSubjects, setSelectedDataSubjects] = useState<string[]>(process.dataSubjects)
   const [selectedDataCategories, setSelectedDataCategories] = useState<string[]>(process.dataCategories)
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>(process.recipients)
+  const processTitle = watch('title')
+
+  const handleTitleBlur = () => {
+    if (processTitle && processTitle.length >= 3) {
+      consult(processTitle)
+    }
+  }
 
   const toggleSelection = (item: string, list: string[], setList: (list: string[]) => void, field: 'dataSubjects' | 'dataCategories' | 'recipients') => {
     const newList = list.includes(item)
@@ -117,6 +127,7 @@ export function RopaEditForm({ departments, process }: RopaEditFormProps) {
               id="title"
               placeholder="e.g., Employee Payroll Processing"
               {...register('title')}
+              onBlur={handleTitleBlur}
             />
             {errors.title && (
               <p className="text-sm text-red-600">{errors.title.message}</p>
@@ -151,6 +162,29 @@ export function RopaEditForm({ departments, process }: RopaEditFormProps) {
               {...register('description')}
             />
           </div>
+
+          {(loading || answer || error) && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Lightbulb className="h-4 w-4 text-blue-600" />
+                  Compliance Tip from SILIP
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Consulting Philippine Data Privacy laws...
+                  </div>
+                ) : error ? (
+                  <p className="text-sm text-red-600">{error}</p>
+                ) : (
+                  <p className="text-sm text-slate-700">{answer}</p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex justify-end">
             <Button type="button" onClick={() => setCurrentStep('data')}>

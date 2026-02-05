@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getProcessesByOrg } from '@/actions/ropa'
 import { ProcessTable } from '@/components/process-table'
+import { RopaReports } from '@/components/ropa-reports'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FolderOpen, Plus } from 'lucide-react'
@@ -62,6 +63,8 @@ export default async function RopaListPage() {
           </CardContent>
         </Card>
       </div>
+
+      <RopaReports processes={processes} />
 
       <Card>
         <CardHeader>

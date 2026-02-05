@@ -55,6 +55,18 @@ export const departmentAdminSchema = z.object({
 
 export type DepartmentAdminFormData = z.infer<typeof departmentAdminSchema>
 
+// PIA Schema (Governance)
+export const piaSchema = z.object({
+  orgId: z.string().min(1, 'Organization is required'),
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  description: z.string().optional(),
+  owner: z.string().optional(),
+  status: z.enum(['DRAFT', 'REVIEW', 'APPROVED']).default('DRAFT'),
+  answers: z.record(z.any()).default({}),
+})
+
+export type PiaFormData = z.infer<typeof piaSchema>
+
 // Backward compatibility - keep old schemas
 export const organizationSchema = z.object({
   name: z.string().min(2, 'Organization name must be at least 2 characters'),

@@ -20,13 +20,16 @@ export function useSilipConsult() {
       return
     }
 
-    setResponse({ answer: '', loading: true, error: null })
+    setResponse((prev) => ({
+      answer: prev.answer,
+      loading: true,
+      error: null,
+    }))
 
     try {
-      const silipUrl = process.env.NEXT_PUBLIC_SILIP_API_URL || 'https://silip.sanchez.ph/api'
       const prompt = `What is the lawful basis under the Philippine Data Privacy Act for ${processTitle}? Provide a brief, practical answer for a Data Protection Officer.`
 
-      const res = await fetch(`${silipUrl}/consult`, {
+      const res = await fetch('/api/ai/consult', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,23 +37,19 @@ export function useSilipConsult() {
         body: JSON.stringify({ query: prompt }),
       })
 
-      if (!res.ok) {
-        throw new Error('Failed to fetch from SILIP API')
-      }
-
       const data = await res.json()
 
       setResponse({
         answer: data.answer || 'No response from SILIP',
         loading: false,
-        error: null,
+        error: data.error || null,
       })
     } catch (error) {
-      setResponse({
-        answer: '',
+      setResponse((prev) => ({
+        answer: prev.answer,
         loading: false,
         error: error instanceof Error ? error.message : 'An error occurred',
-      })
+      }))
     }
   }, [])
 

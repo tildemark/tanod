@@ -78,6 +78,25 @@ model Process {
   @@map("processes")
 }
 
+// Privacy Impact Assessment (Philippine DPA)
+model PiaAssessment {
+  id          String       @id @default(uuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  owner       String?
+  status      String       @default("DRAFT") // DRAFT, REVIEW, APPROVED
+
+  answers     Json         @default("{}")
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("pia_assessments")
+}
+
 // Breach Incident Model
 model Incident {
   id                   String       @id @default(uuid())

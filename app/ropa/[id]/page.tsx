@@ -7,6 +7,8 @@ import { ArrowLeft, Edit, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { Separator } from '@/components/ui/separator'
 import { DeleteProcessButton } from '@/components/delete-process-button'
+import { RopaApprovalPrintButton } from '@/components/ropa-approval-print-button'
+import { formatTrackingCode } from '@/lib/ropa'
 
 interface ProcessDetailPageProps {
   params: Promise<{
@@ -23,6 +25,7 @@ export default async function ProcessDetailPage({ params }: ProcessDetailPagePro
   }
 
   const process = result.data
+  const trackingCode = formatTrackingCode(process.id, process.createdAt)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -70,6 +73,7 @@ export default async function ProcessDetailPage({ params }: ProcessDetailPagePro
           </div>
         </div>
         <div className="flex gap-2">
+          <RopaApprovalPrintButton processId={process.id} />
           <Link href={`/ropa/${process.id}/edit`}>
             <Button variant="outline">
               <Edit className="h-4 w-4 mr-2" />
@@ -200,6 +204,11 @@ export default async function ProcessDetailPage({ params }: ProcessDetailPagePro
           <CardTitle className="text-lg">Metadata</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
+          <div className="flex justify-between">
+            <span className="text-slate-600">Tracking Code:</span>
+            <span className="font-mono text-slate-900">{trackingCode}</span>
+          </div>
+          <Separator />
           <div className="flex justify-between">
             <span className="text-slate-600">Process ID:</span>
             <span className="font-mono text-slate-900">{process.id}</span>
