@@ -65,8 +65,23 @@ export interface DsrRequest {
   received_date: string;
   sla_deadline: string;
   notes?: string | null;
+  requested_scope?: string | null;
+  action_taken?: 'REDACTED' | 'ERASED' | 'EXTRACTED_PROVIDED' | 'DENIED' | 'NOTE_ADDED' | string | null;
+  data_location?: string | null;
+  resolution_summary?: string | null;
+  resolved_date?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+}
+
+export interface DsrActionLog {
+  id: string;
+  dsr_id: string;
+  action_taken: string;
+  action_details: string;
+  data_location?: string | null;
+  performed_by: string;
+  created_at: string;
 }
 
 export interface CreateDsrPayload {
@@ -76,6 +91,18 @@ export interface CreateDsrPayload {
   requester_email: string;
   received_date?: string;
   notes?: string;
+  requested_scope?: string;
+  data_location?: string;
+}
+
+export interface ResolveDsrPayload {
+  id: string;
+  status: 'ACTIONED' | 'REJECTED';
+  action_taken: 'REDACTED' | 'ERASED' | 'EXTRACTED_PROVIDED' | 'DENIED' | 'NOTE_ADDED' | string;
+  action_details: string;
+  data_location?: string;
+  resolution_summary: string;
+  performed_by?: string;
 }
 
 // ==========================================

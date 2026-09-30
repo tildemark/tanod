@@ -34,15 +34,20 @@
     Copy,
     Check,
     FileSpreadsheet,
-    Award
+    Award,
+    ShieldCheck,
+    History
   } from 'lucide-svelte';
+  import { listSystemAuditLogs, verifyAuditTrailIntegrity, type SystemAuditLog } from '$lib/api/audit';
 
   // Tabs
-  let activeTab = $state<'organization' | 'governance_team' | 'departments' | 'copypaste'>('organization');
+  let activeTab = $state<'organization' | 'governance_team' | 'departments' | 'copypaste' | 'audit_trail'>('organization');
 
   let org = $state<Organization | null>(null);
   let departments = $state<Department[]>([]);
   let privacyOfficers = $state<PrivacyOfficer[]>([]);
+  let auditLogs = $state<SystemAuditLog[]>([]);
+  let isIntegrityValid = $state<boolean | null>(null);
   let isLoading = $state(true);
   let isSavingOrg = $state(false);
   let statusMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -113,13 +118,17 @@
       const fetchedOrg = await getOrganization();
       org = fetchedOrg;
 
-      const [fetchedDepts, fetchedOfficers] = await Promise.all([
+      const [fetchedDepts, fetchedOfficers, fetchedLogs, isValid] = await Promise.all([
         listDepartments(fetchedOrg.id),
-        listPrivacyOfficers(fetchedOrg.id)
+        listPrivacyOfficers(fetchedOrg.id),
+        listSystemAuditLogs(fetchedOrg.id, 100),
+        verifyAuditTrailIntegrity()
       ]);
 
       departments = fetchedDepts;
       privacyOfficers = fetchedOfficers;
+      auditLogs = fetchedLogs;
+      isIntegrityValid = isValid;
 
       // Populate Organization & Head fields
       name = fetchedOrg.name || '';
@@ -422,6 +431,17 @@
         class="px-3.5 py-1.5 rounded-md transition-all {activeTab === 'copypaste' ? 'bg-amber-100 text-amber-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'}"
       >
         📋 NPCRS Portal Helper
+      </button>
+      <button
+        onclick={async () => {
+          activeTab = 'audit_trail';
+          auditLogs = await listSystemAuditLogs(org?.id || '', 100);
+          isIntegrityValid = await verifyAuditTrailIntegrity();
+        }}
+        class="px-3.5 py-1.5 rounded-md transition-all flex items-center gap-1.5 {activeTab === 'audit_trail' ? 'bg-slate-900 text-white shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'}"
+      >
+        <History class="h-3.5 w-3.5 text-amber-400" />
+        <span>Audit Trail ({auditLogs.length})</span>
       </button>
     </div>
   </div>
@@ -977,6 +997,86 @@
           </button>
         </div>
 
+      </div>
+    </div>
+  {/if}
+
+  <!-- TAB 5: IMMUTABLE TAMPER-EVIDENT AUDIT TRAIL -->
+  {#if activeTab === 'audit_trail'}
+    <div class="space-y-4">
+      <!-- Cryptographic Proof Status Banner -->
+      <div class="p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs {isIntegrityValid ? 'bg-emerald-50/80 border-emerald-300' : 'bg-rose-50/80 border-rose-300'}">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center {isIntegrityValid ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
+            <ShieldCheck class="w-5 h-5" />
+          </div>
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider {isIntegrityValid ? 'text-emerald-950' : 'text-rose-950'} font-mono">
+              {isIntegrityValid ? 'Cryptographic Hash-Chain Intact & Verified' : 'Cryptographic Integrity Warning!'}
+            </h3>
+            <p class="text-xs {isIntegrityValid ? 'text-emerald-900' : 'text-rose-900'}">
+              {isIntegrityValid ? 'Every compliance action is cryptographically chained with SHA-256 hashes (RA 10173 Sec. 20 accountability).' : 'A hash mismatch was detected in the local audit log sequence.'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onclick={async () => {
+            auditLogs = await listSystemAuditLogs(org?.id || '', 100);
+            isIntegrityValid = await verifyAuditTrailIntegrity();
+          }}
+          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs shrink-0"
+        >
+          Re-verify Audit Trail
+        </button>
+      </div>
+
+      <!-- Audit Records Table -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono">
+            Sequential Immutable Log Registry ({auditLogs.length} Events)
+          </span>
+          <span class="text-[11px] font-mono text-slate-500">Append-Only SQLite WAL</span>
+        </div>
+
+        {#if auditLogs.length === 0}
+          <div class="p-12 text-center text-xs text-slate-400">
+            No audit events recorded yet. Actions across DSR, ROPA, Incidents, and Vault will automatically appear here.
+          </div>
+        {:else}
+          <div class="overflow-x-auto max-h-[500px] overflow-y-auto divide-y divide-slate-100">
+            {#each auditLogs as log}
+              <div class="p-4 hover:bg-slate-50/70 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                <div class="space-y-1 flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
+                      {log.action}
+                    </span>
+                    <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                      {log.entity_type}
+                    </span>
+                    <span class="text-[11px] text-slate-400 font-mono">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                  <p class="font-bold text-slate-900 truncate">{log.summary}</p>
+                  {#if log.details && log.details !== '{}'}
+                    <p class="text-[11px] font-mono text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-200/80 truncate">
+                      {log.details}
+                    </p>
+                  {/if}
+                </div>
+
+                <div class="text-right shrink-0 font-mono text-[10px] text-slate-400">
+                  <div>Hash: <span class="text-slate-600 font-bold">{log.entry_hash.slice(0, 12)}...</span></div>
+                  <div>Prev: <span>{log.prev_hash.slice(0, 12)}...</span></div>
+                </div>
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
     </div>
   {/if}

@@ -216,10 +216,35 @@ fn run_migrations(conn: &Connection) -> Result<()> {
             notes TEXT,
             uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+
+        -- 9. Dedicated Tamper-Evident Hash-Chained Audit Trail (RA 10173 & NPC Circular 16-01 Sec. 25)
+        CREATE TABLE IF NOT EXISTS system_audit_logs (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            action TEXT NOT NULL,          -- e.g. DSR_CREATED, DSR_ACTIONED, ROPA_UPDATED, INCIDENT_LOGGED
+            entity_type TEXT NOT NULL,     -- 'DSR', 'ROPA', 'PIA', 'INCIDENT', 'VAULT', 'SYSTEM'
+            entity_id TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            details TEXT NOT NULL DEFAULT '{}',
+            prev_hash TEXT NOT NULL,
+            entry_hash TEXT NOT NULL
+        );
+
+        -- 10. DSR Action / Resolution Historical Trail
+        CREATE TABLE IF NOT EXISTS dsr_action_logs (
+            id TEXT PRIMARY KEY,
+            dsr_id TEXT NOT NULL REFERENCES dsr_requests(id) ON DELETE CASCADE,
+            action_taken TEXT NOT NULL,       -- 'REDACTED', 'ERASED', 'EXTRACTED_PROVIDED', 'DENIED', 'NOTE_ADDED'
+            action_details TEXT NOT NULL,     -- Description of what was done
+            data_location TEXT,               -- Where data was stored / database / physical cabinet
+            performed_by TEXT NOT NULL DEFAULT 'Data Protection Office',
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
         "#
     )?;
 
-    // Safe column migrations in case table was created previously without new NPCRS fields
+    // Safe column migrations in case table was created previously without new NPCRS & DSR fields
     let alter_statements = vec![
         "ALTER TABLE organizations ADD COLUMN tin_number TEXT;",
         "ALTER TABLE organizations ADD COLUMN entity_type TEXT NOT NULL DEFAULT 'PIC';",
@@ -233,12 +258,18 @@ fn run_migrations(conn: &Connection) -> Result<()> {
         "ALTER TABLE organizations ADD COLUMN renewal_deadline DATE;",
         "ALTER TABLE organizations ADD COLUMN has_npc_seal BOOLEAN DEFAULT 0;",
         "ALTER TABLE organizations ADD COLUMN asir_due_date DATE;",
+        // Enhanced DSR fields
+        "ALTER TABLE dsr_requests ADD COLUMN requested_scope TEXT;",
+        "ALTER TABLE dsr_requests ADD COLUMN action_taken TEXT;",
+        "ALTER TABLE dsr_requests ADD COLUMN data_location TEXT;",
+        "ALTER TABLE dsr_requests ADD COLUMN resolution_summary TEXT;",
+        "ALTER TABLE dsr_requests ADD COLUMN resolved_date DATETIME;",
     ];
 
     for stmt in alter_statements {
         let _ = conn.execute(stmt, []);
     }
 
-    log::info!("Database schema migrations applied successfully with NPCRS compliance additions.");
+    log::info!("Database schema migrations applied successfully with NPCRS compliance and tamper-evident audit additions.");
     Ok(())
 }

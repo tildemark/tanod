@@ -42,11 +42,16 @@ pub fn run() {
             commands::enforcement::create_incident,
             commands::enforcement::update_incident,
             commands::enforcement::delete_incident,
-            // Data Subject Rights (DSR) Kanban
+            // Data Subject Rights (DSR) Kanban & Action Logs
             commands::enforcement::list_dsr_requests,
             commands::enforcement::create_dsr_request,
             commands::enforcement::update_dsr_status,
+            commands::enforcement::resolve_dsr_request,
+            commands::enforcement::list_dsr_action_logs,
             commands::enforcement::delete_dsr_request,
+            // Dedicated Immutable Tamper-Evident Audit Trail
+            commands::audit::list_system_audit_logs,
+            commands::audit::verify_audit_trail_integrity,
             // DPO Directives & Institutional Memos
             commands::enforcement::list_dpo_memos,
             commands::enforcement::create_dpo_memo,

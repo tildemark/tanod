@@ -39,6 +39,14 @@ export async function updateDsrStatus(id: string, status: string): Promise<void>
   return await invoke<void>('update_dsr_status', { payload: { id, status } });
 }
 
+export async function resolveDsrRequest(payload: import('$lib/types/enforcement').ResolveDsrPayload): Promise<void> {
+  return await invoke<void>('resolve_dsr_request', { payload });
+}
+
+export async function listDsrActionLogs(dsrId: string): Promise<import('$lib/types/enforcement').DsrActionLog[]> {
+  return await invoke<import('$lib/types/enforcement').DsrActionLog[]>('list_dsr_action_logs', { dsrId });
+}
+
 export async function deleteDsrRequest(id: string): Promise<void> {
   return await invoke<void>('delete_dsr_request', { id });
 }

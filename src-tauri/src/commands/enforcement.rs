@@ -245,8 +245,24 @@ pub struct DsrRequest {
     pub received_date: String,
     pub sla_deadline: String,
     pub notes: Option<String>,
+    pub requested_scope: Option<String>,
+    pub action_taken: Option<String>,
+    pub data_location: Option<String>,
+    pub resolution_summary: Option<String>,
+    pub resolved_date: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DsrActionLog {
+    pub id: String,
+    pub dsr_id: String,
+    pub action_taken: String,
+    pub action_details: String,
+    pub data_location: Option<String>,
+    pub performed_by: String,
+    pub created_at: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -257,12 +273,25 @@ pub struct CreateDsrPayload {
     pub requester_email: String,
     pub received_date: Option<String>,
     pub notes: Option<String>,
+    pub requested_scope: Option<String>,
+    pub data_location: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateDsrStatusPayload {
     pub id: String,
     pub status: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResolveDsrPayload {
+    pub id: String,
+    pub status: String,              // 'ACTIONED' or 'REJECTED'
+    pub action_taken: String,        // 'REDACTED', 'ERASED', 'EXTRACTED_PROVIDED', 'DENIED', 'NOTE_ADDED'
+    pub action_details: String,      // Description of what was done
+    pub data_location: Option<String>,
+    pub resolution_summary: String,
+    pub performed_by: Option<String>,
 }
 
 #[tauri::command]
@@ -272,7 +301,9 @@ pub fn list_dsr_requests(org_id: String, state: State<'_, DbState>) -> Result<Ve
     let mut stmt = conn
         .prepare(
             "SELECT id, org_id, request_type, requester_name, requester_email,
-                    status, received_date, sla_deadline, notes, created_at, updated_at
+                    status, received_date, sla_deadline, notes,
+                    requested_scope, action_taken, data_location, resolution_summary, resolved_date,
+                    created_at, updated_at
              FROM dsr_requests
              WHERE org_id = ?1 OR ?1 = ''
              ORDER BY received_date DESC",
@@ -291,8 +322,13 @@ pub fn list_dsr_requests(org_id: String, state: State<'_, DbState>) -> Result<Ve
                 received_date: row.get(6)?,
                 sla_deadline: row.get(7)?,
                 notes: row.get(8)?,
-                created_at: row.get(9)?,
-                updated_at: row.get(10)?,
+                requested_scope: row.get(9)?,
+                action_taken: row.get(10)?,
+                data_location: row.get(11)?,
+                resolution_summary: row.get(12)?,
+                resolved_date: row.get(13)?,
+                created_at: row.get(14)?,
+                updated_at: row.get(15)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -330,8 +366,8 @@ pub fn create_dsr_request(
     conn.execute(
         "INSERT INTO dsr_requests (
             id, org_id, request_type, requester_name, requester_email,
-            status, received_date, sla_deadline, notes
-         ) VALUES (?1, ?2, ?3, ?4, ?5, 'RECEIVED', ?6, ?7, ?8)",
+            status, received_date, sla_deadline, notes, requested_scope, data_location
+         ) VALUES (?1, ?2, ?3, ?4, ?5, 'RECEIVED', ?6, ?7, ?8, ?9, ?10)",
         params![
             id,
             payload.org_id,
@@ -341,9 +377,26 @@ pub fn create_dsr_request(
             received_iso,
             sla_iso,
             payload.notes,
+            payload.requested_scope,
+            payload.data_location,
         ],
     )
     .map_err(|e| e.to_string())?;
+
+    // Record Immutable Audit Log
+    let audit_summary = format!(
+        "DSR Request logged: {} ({}) for {}",
+        payload.request_type, id, payload.requester_name
+    );
+    let _ = crate::commands::audit::record_audit_entry(
+        &conn,
+        &payload.org_id,
+        "DSR_RECEIVED",
+        "DSR",
+        &id,
+        &audit_summary,
+        &format!("{{\"type\":\"{}\",\"email\":\"{}\"}}", payload.request_type, payload.requester_email),
+    );
 
     Ok(DsrRequest {
         id,
@@ -355,6 +408,11 @@ pub fn create_dsr_request(
         received_date: received_iso,
         sla_deadline: sla_iso,
         notes: payload.notes,
+        requested_scope: payload.requested_scope,
+        action_taken: None,
+        data_location: payload.data_location,
+        resolution_summary: None,
+        resolved_date: None,
         created_at: None,
         updated_at: None,
     })
@@ -373,7 +431,133 @@ pub fn update_dsr_status(
     )
     .map_err(|e| e.to_string())?;
 
+    // Record Immutable Audit Log
+    let summary = format!("DSR {} transitioned to {}", payload.id, payload.status);
+    let _ = crate::commands::audit::record_audit_entry(
+        &conn,
+        "",
+        "DSR_STATUS_CHANGE",
+        "DSR",
+        &payload.id,
+        &summary,
+        &format!("{{\"status\":\"{}\"}}", payload.status),
+    );
+
     Ok(())
+}
+
+#[tauri::command]
+pub fn resolve_dsr_request(
+    payload: ResolveDsrPayload,
+    state: State<'_, DbState>,
+) -> Result<(), String> {
+    let conn = state.conn.lock().map_err(|e| e.to_string())?;
+    let now_iso = Utc::now().to_rfc3339();
+    let action_log_id = Uuid::new_v4().to_string();
+    let performer = payload.performed_by.unwrap_or_else(|| "Data Protection Office".to_string());
+
+    // 1. Update dsr_requests
+    conn.execute(
+        "UPDATE dsr_requests SET
+            status = ?1,
+            action_taken = ?2,
+            data_location = COALESCE(?3, data_location),
+            resolution_summary = ?4,
+            resolved_date = ?5,
+            updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?6",
+        params![
+            payload.status,
+            payload.action_taken,
+            payload.data_location,
+            payload.resolution_summary,
+            now_iso,
+            payload.id,
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // 2. Append to dsr_action_logs trail
+    conn.execute(
+        "INSERT INTO dsr_action_logs (
+            id, dsr_id, action_taken, action_details, data_location, performed_by, created_at
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        params![
+            action_log_id,
+            payload.id,
+            payload.action_taken,
+            payload.action_details,
+            payload.data_location,
+            performer,
+            now_iso,
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // 3. Record Immutable Tamper-Evident Audit Log
+    let summary = format!(
+        "DSR {} resolved with action: {} ({})",
+        payload.id, payload.action_taken, payload.status
+    );
+    let details = serde_json::json!({
+        "status": payload.status,
+        "action_taken": payload.action_taken,
+        "action_details": payload.action_details,
+        "data_location": payload.data_location,
+        "resolution_summary": payload.resolution_summary,
+        "performer": performer
+    })
+    .to_string();
+
+    let _ = crate::commands::audit::record_audit_entry(
+        &conn,
+        "",
+        "DSR_RESOLVED",
+        "DSR",
+        &payload.id,
+        &summary,
+        &details,
+    );
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn list_dsr_action_logs(
+    dsr_id: String,
+    state: State<'_, DbState>,
+) -> Result<Vec<DsrActionLog>, String> {
+    let conn = state.conn.lock().map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT id, dsr_id, action_taken, action_details, data_location, performed_by, created_at
+             FROM dsr_action_logs
+             WHERE dsr_id = ?1
+             ORDER BY created_at DESC",
+        )
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map(params![dsr_id], |row| {
+            Ok(DsrActionLog {
+                id: row.get(0)?,
+                dsr_id: row.get(1)?,
+                action_taken: row.get(2)?,
+                action_details: row.get(3)?,
+                data_location: row.get(4)?,
+                performed_by: row.get(5)?,
+                created_at: row.get(6)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut list = Vec::new();
+    for row in rows {
+        list.push(row.map_err(|e| e.to_string())?);
+    }
+
+    Ok(list)
 }
 
 #[tauri::command]
@@ -381,6 +565,19 @@ pub fn delete_dsr_request(id: String, state: State<'_, DbState>) -> Result<(), S
     let conn = state.conn.lock().map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM dsr_requests WHERE id = ?1", params![id])
         .map_err(|e| e.to_string())?;
+
+    // Record audit log
+    let summary = format!("DSR Request deleted: {}", id);
+    let _ = crate::commands::audit::record_audit_entry(
+        &conn,
+        "",
+        "DSR_DELETED",
+        "DSR",
+        &id,
+        &summary,
+        "{}",
+    );
+
     Ok(())
 }
 
