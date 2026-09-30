@@ -51,6 +51,12 @@ pub fn run() {
             commands::enforcement::list_dpo_memos,
             commands::enforcement::create_dpo_memo,
             commands::enforcement::delete_dpo_memo,
+            // Statutory Document Vault
+            commands::vault::list_statutory_documents,
+            commands::vault::upload_statutory_document,
+            commands::vault::open_statutory_document,
+            commands::vault::open_vault_folder,
+            commands::vault::delete_statutory_document,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

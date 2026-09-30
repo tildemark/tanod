@@ -192,6 +192,30 @@ fn run_migrations(conn: &Connection) -> Result<()> {
             issued_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+
+        -- 8. Statutory Documents & Yearly Vault
+        CREATE TABLE IF NOT EXISTS statutory_documents (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+            year INTEGER NOT NULL,
+            category TEXT NOT NULL CHECK(category IN (
+                'SEC_GIS',
+                'SECRETARY_CERTIFICATE',
+                'BOARD_RESOLUTION',
+                'NOTARIZED_DPO_FORM',
+                'NPC_REGISTRATION_CERT',
+                'NPC_SEAL_OF_REGISTRATION',
+                'DATA_SHARING_AGREEMENT',
+                'OTHER_COMPLIANCE'
+            )),
+            title TEXT NOT NULL,
+            file_name TEXT NOT NULL,
+            file_path TEXT NOT NULL,
+            file_size_bytes INTEGER NOT NULL DEFAULT 0,
+            mime_type TEXT,
+            notes TEXT,
+            uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
         "#
     )?;
 

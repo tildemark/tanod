@@ -32,6 +32,12 @@
       ]
     },
     {
+      group: 'Statutory Archive',
+      items: [
+        { name: 'Document Vault', href: '/vault', icon: FolderLock },
+      ]
+    },
+    {
       group: 'Administration',
       items: [
         { name: 'Entity & Governance', href: '/settings', icon: Settings },
