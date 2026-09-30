@@ -56,7 +56,7 @@
 	<title>About TANOD — System Architecture & Privacy Transparency</title>
 </svelte:head>
 
-<div class="max-w-4xl mx-auto space-y-8 pb-12">
+<div class="space-y-6 pb-12">
 	<!-- Top Header: Clean, Executive Typography -->
 	<div class="border-b border-slate-200 pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
 		<div>

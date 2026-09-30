@@ -91,7 +91,7 @@
 	<title>Disaster Recovery & Clean PC Restoration — TANOD</title>
 </svelte:head>
 
-<div class="max-w-4xl mx-auto space-y-8 pb-12">
+<div class="space-y-6 pb-12">
 	<!-- Header -->
 	<div class="border-b border-slate-200 pb-5">
 		<div class="flex items-center gap-2">

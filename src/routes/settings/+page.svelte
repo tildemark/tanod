@@ -384,7 +384,7 @@
   }
 </script>
 
-<div class="max-w-5xl mx-auto space-y-6">
+<div class="space-y-6">
   <!-- Page Header -->
   <div class="flex items-center justify-between border-b border-slate-200 pb-5">
     <div>

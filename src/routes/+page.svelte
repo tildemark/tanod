@@ -79,7 +79,7 @@
   });
 </script>
 
-<div class="max-w-6xl mx-auto space-y-8">
+<div class="space-y-8">
   <!-- Executive Welcome Banner -->
   <div class="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/60 p-8 text-white shadow-md relative overflow-hidden">
     <div class="relative z-10 max-w-2xl space-y-3">
