@@ -57,6 +57,10 @@ pub fn run() {
             commands::vault::open_statutory_document,
             commands::vault::open_vault_folder,
             commands::vault::delete_statutory_document,
+            // Disaster Recovery & Clean PC Restoration
+            commands::backup::export_backup_archive,
+            commands::backup::inspect_backup_archive,
+            commands::backup::restore_backup_archive,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {

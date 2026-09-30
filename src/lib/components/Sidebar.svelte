@@ -9,7 +9,9 @@
     FileText,
     Settings,
     Shield,
-    HardDrive
+    HardDrive,
+    Info,
+    Archive
   } from 'lucide-svelte';
 
   let currentPath = $derived($page.url.pathname);
@@ -35,12 +37,14 @@
       group: 'Statutory Archive',
       items: [
         { name: 'Document Vault', href: '/vault', icon: FolderLock },
+        { name: 'Backup & Recovery', href: '/backup', icon: Archive },
       ]
     },
     {
-      group: 'Administration',
+      group: 'Administration & System',
       items: [
         { name: 'Entity & Governance', href: '/settings', icon: Settings },
+        { name: 'About TANOD', href: '/about', icon: Info },
       ]
     }
   ];
@@ -49,8 +53,8 @@
 <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen select-none">
   <!-- Brand / Header -->
   <div class="h-16 flex items-center gap-3 px-5 border-b border-slate-800 bg-slate-950/60">
-    <div class="h-9 w-9 rounded-lg bg-slate-800 border border-amber-500/30 flex items-center justify-center p-1 shadow-sm">
-      <img src="/favicon.svg" alt="TANOD Shield" class="h-full w-full object-contain" />
+    <div class="h-9 w-9 rounded-lg overflow-hidden bg-slate-950 border border-amber-500/40 flex items-center justify-center p-0.5 shadow-md">
+      <img src="/images/tanod-logo.jpg" alt="TANOD Shield Logo" class="h-full w-full object-cover rounded-md" />
     </div>
     <div class="flex flex-col min-w-0">
       <span class="text-sm font-bold tracking-wider text-slate-100 uppercase flex items-center gap-1.5">
