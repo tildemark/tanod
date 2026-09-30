@@ -80,6 +80,11 @@
     })
   );
 
+  // ROPA processes that do not yet have a PIA assessment
+  let pendingProcesses = $derived(
+    processes.filter((p) => !assessments.some((a) => a.process_id === p.id))
+  );
+
   function openCreateWizard(proc: Process) {
     selectedProcess = proc;
     editingAssessment = assessments.find((a) => a.process_id === proc.id) || null;
@@ -164,6 +169,56 @@
         <AlertCircle class="h-4 w-4 shrink-0 text-rose-600" />
       {/if}
       <span>{statusMessage.text}</span>
+    </div>
+  {/if}
+
+  <!-- Pending ROPA Activities Awaiting PIA Assessment Banner -->
+  {#if pendingProcesses.length > 0}
+    <div class="p-4.5 rounded-xl border border-amber-300 bg-amber-50/80 shadow-2xs space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <ShieldAlert class="h-4.5 w-4.5 text-amber-700 shrink-0" />
+          <h3 class="text-xs font-bold text-amber-950 uppercase tracking-wider">
+            {pendingProcesses.length} ROPA {pendingProcesses.length === 1 ? 'Activity' : 'Activities'} Awaiting Privacy Impact Assessment
+          </h3>
+        </div>
+        <span class="text-[11px] font-mono text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded border border-amber-300">
+          NPC Advisory 2017-03 Compliance
+        </span>
+      </div>
+
+      <p class="text-xs text-amber-900 leading-relaxed">
+        The ROPA Registry documents your statutory processing activities. To place them onto the 4×4 Risk Matrix and calculate mathematical risk ratings (1–16), select an activity below to conduct its PIA:
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+        {#each pendingProcesses as proc}
+          <div class="bg-white border border-amber-200/90 rounded-lg p-3 flex flex-col justify-between gap-2 shadow-2xs hover:border-amber-400 transition-all">
+            <div>
+              <div class="flex items-center justify-between gap-1 mb-1">
+                <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                  {proc.status}
+                </span>
+                <span class="text-[10px] font-mono text-slate-400 truncate max-w-[120px]">
+                  {proc.department_name || 'Organization'}
+                </span>
+              </div>
+              <h4 class="text-xs font-bold text-slate-900 line-clamp-2">
+                {proc.title}
+              </h4>
+            </div>
+
+            <button
+              type="button"
+              onclick={() => openCreateWizard(proc)}
+              class="w-full mt-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+            >
+              <Scale class="h-3.5 w-3.5 text-amber-400" />
+              <span>Assess in 4×4 Matrix</span>
+            </button>
+          </div>
+        {/each}
+      </div>
     </div>
   {/if}
 
