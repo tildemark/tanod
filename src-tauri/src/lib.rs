@@ -32,6 +32,11 @@ pub fn run() {
             commands::ropa::create_process,
             commands::ropa::update_process,
             commands::ropa::delete_process,
+            // PIA Assessments
+            commands::pia::list_pia_assessments,
+            commands::pia::get_pia_by_process_id,
+            commands::pia::save_pia_assessment,
+            commands::pia::delete_pia_assessment,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {
