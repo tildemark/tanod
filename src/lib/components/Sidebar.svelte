@@ -44,10 +44,12 @@
       group: 'Administration & System',
       items: [
         { name: 'Entity & Governance', href: '/settings', icon: Settings },
-        { name: 'About TANOD', href: '/about', icon: Info },
       ]
     }
   ];
+
+  import AboutModal from '$lib/components/AboutModal.svelte';
+  let isAboutModalOpen = $state(false);
 </script>
 
 <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col h-screen select-none">
@@ -92,15 +94,37 @@
     {/each}
   </nav>
 
-  <!-- Offline Sovereignty Status Banner -->
-  <div class="p-3 m-3 rounded-lg border border-slate-800 bg-slate-950/80">
-    <div class="flex items-center gap-2 text-xs font-medium text-slate-300 mb-1">
-      <HardDrive class="h-3.5 w-3.5 text-emerald-400" />
-      <span>Local Encrypted DB</span>
+  <!-- Sidebar Footer: Offline DB Status & About TANOD Dialog Trigger -->
+  <div class="p-3 m-3 space-y-2 border-t border-slate-800/80 pt-3">
+    <!-- Offline Sovereignty Status Banner -->
+    <div class="p-2.5 rounded-lg border border-slate-800 bg-slate-950/80">
+      <div class="flex items-center gap-2 text-xs font-medium text-slate-300 mb-1">
+        <HardDrive class="h-3.5 w-3.5 text-emerald-400" />
+        <span>Local Encrypted DB</span>
+      </div>
+      <div class="flex items-center justify-between text-[11px] text-slate-400">
+        <span>Storage</span>
+        <span class="font-mono text-[10px] text-emerald-400 bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-800/40">100% Offline</span>
+      </div>
     </div>
-    <div class="flex items-center justify-between text-[11px] text-slate-400">
-      <span>Storage</span>
-      <span class="font-mono text-[10px] text-emerald-400 bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-800/40">100% Offline</span>
-    </div>
+
+    <!-- About TANOD Trigger Button -->
+    <button
+      type="button"
+      onclick={() => (isAboutModalOpen = true)}
+      class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 transition-colors border border-transparent hover:border-slate-700/60 cursor-pointer group"
+    >
+      <div class="flex items-center gap-2.5">
+        <Info class="h-4 w-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
+        <span>About TANOD</span>
+      </div>
+      <span class="text-[10px] font-mono text-slate-500 group-hover:text-slate-300">v0.1.0</span>
+    </button>
   </div>
 </aside>
+
+<!-- Dedicated About Modal Dialog -->
+<AboutModal
+  isOpen={isAboutModalOpen}
+  onClose={() => (isAboutModalOpen = false)}
+/>
