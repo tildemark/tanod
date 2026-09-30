@@ -1,5 +1,7 @@
 <script lang="ts">
 	import './layout.css';
+	import Sidebar from '$lib/components/Sidebar.svelte';
+	import Header from '$lib/components/Header.svelte';
 
 	let { children } = $props();
 </script>
@@ -9,4 +11,15 @@
 	<title>TANOD Desktop - Privacy-First Local DPO Workspace</title>
 </svelte:head>
 
-{@render children()}
+<div class="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans antialiased text-slate-900">
+	<!-- Sidebar -->
+	<Sidebar />
+
+	<!-- Main Workspace Area -->
+	<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+		<Header />
+		<main class="flex-1 overflow-y-auto p-8">
+			{@render children()}
+		</main>
+	</div>
+</div>

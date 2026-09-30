@@ -1,3 +1,4 @@
+pub mod commands;
 pub mod db;
 
 use std::sync::Mutex;
@@ -11,6 +12,15 @@ pub fn run() {
         .manage(db::DbState {
             conn: Mutex::new(conn),
         })
+        .invoke_handler(tauri::generate_handler![
+            commands::admin::get_organization,
+            commands::admin::update_organization,
+            commands::admin::save_org_logo,
+            commands::admin::list_departments,
+            commands::admin::create_department,
+            commands::admin::update_department,
+            commands::admin::delete_department,
+        ])
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
