@@ -8,10 +8,10 @@
 	type PillarType = 'Organizational' | 'Physical' | 'Technical' | 'Incident';
 
 	const PILLARS: { value: PillarType; label: string; badge: string; desc: string }[] = [
-		{ value: 'Organizational', label: 'Organizational Security', badge: 'bg-blue-950 text-blue-300 border-blue-800/40', desc: 'Policies, DPO appointment, training, confidentiality' },
-		{ value: 'Physical', label: 'Physical Security', badge: 'bg-amber-950 text-amber-300 border-amber-800/40', desc: 'Access control, server rooms, paper records disposal' },
-		{ value: 'Technical', label: 'Technical Security', badge: 'bg-purple-950 text-purple-300 border-purple-800/40', desc: 'Encryption, access logs, firewalls, MFA, backups' },
-		{ value: 'Incident', label: 'Breach & Incident Protocol', badge: 'bg-rose-950 text-rose-300 border-rose-800/40', desc: '72-hour notifications, escalation, forensic readiness' }
+		{ value: 'Organizational', label: 'Organizational Security', badge: 'bg-blue-50 text-blue-700 border-blue-200', desc: 'Policies, DPO appointment, training, confidentiality' },
+		{ value: 'Physical', label: 'Physical Security', badge: 'bg-amber-50 text-amber-700 border-amber-200', desc: 'Access control, server rooms, paper records disposal' },
+		{ value: 'Technical', label: 'Technical Security', badge: 'bg-purple-50 text-purple-700 border-purple-200', desc: 'Encryption, access logs, firewalls, MFA, backups' },
+		{ value: 'Incident', label: 'Breach & Incident Protocol', badge: 'bg-rose-50 text-rose-700 border-rose-200', desc: '72-hour notifications, escalation, forensic readiness' }
 	];
 
 	let memos: DpoMemo[] = [];
@@ -106,16 +106,16 @@
 <!-- Standard App View (Hidden on print) -->
 <div class="space-y-6 print:hidden">
 	<!-- Header -->
-	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
 		<div>
 			<div class="flex items-center gap-2">
-				<span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800/40">
+				<span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
 					NPC Circular 16-03 & RA 10173 Sec. 21
 				</span>
 				<span class="text-xs text-slate-500">Institutional Governance & Accountability</span>
 			</div>
-			<h1 class="text-2xl font-bold text-white tracking-tight mt-1">DPO Memos & Directives</h1>
-			<p class="text-sm text-slate-400 mt-1 max-w-2xl">
+			<h1 class="text-2xl font-bold text-slate-900 tracking-tight mt-1">DPO Memos & Directives</h1>
+			<p class="text-sm text-slate-600 mt-1 max-w-2xl">
 				Serialized institutional directives establishing accountability, mandatory privacy protocols, and technical security instructions across the organization.
 			</p>
 		</div>
@@ -124,7 +124,7 @@
 			<button
 				type="button"
 				on:click={() => { resetForm(); showCreateModal = true; }}
-				class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-lg font-medium text-sm shadow-lg shadow-blue-900/20 transition-all cursor-pointer"
+				class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-xs transition-all cursor-pointer"
 			>
 				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -139,7 +139,7 @@
 		<button
 			type="button"
 			on:click={() => selectedPillarFilter = 'ALL'}
-			class="px-3 py-1 rounded-full text-xs font-medium border transition-colors {selectedPillarFilter === 'ALL' ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'}"
+			class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {selectedPillarFilter === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'}"
 		>
 			All Directives ({memos.length})
 		</button>
@@ -147,7 +147,7 @@
 			<button
 				type="button"
 				on:click={() => selectedPillarFilter = pil.value}
-				class="px-3 py-1 rounded-full text-xs font-medium border transition-colors {selectedPillarFilter === pil.value ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'}"
+				class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {selectedPillarFilter === pil.value ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'}"
 			>
 				{pil.label} ({memos.filter(m => m.pillar === pil.value).length})
 			</button>
@@ -156,28 +156,28 @@
 
 	<!-- Memos List -->
 	{#if loading}
-		<div class="p-12 text-center text-slate-500 bg-slate-900/30 rounded-xl border border-slate-800">
-			<div class="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+		<div class="p-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200 shadow-2xs">
+			<div class="animate-spin w-8 h-8 border-2 border-slate-800 border-t-transparent rounded-full mx-auto mb-3"></div>
 			Loading Institutional Memo Registry...
 		</div>
 	{:else if filteredMemos.length === 0}
-		<div class="p-12 text-center text-slate-500 bg-slate-900/30 rounded-xl border border-slate-800">
-			<div class="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-3">
+		<div class="p-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200 shadow-2xs">
+			<div class="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-3">
 				<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 				</svg>
 			</div>
-			<p class="font-medium text-slate-300">No Directives Found</p>
+			<p class="font-bold text-slate-800">No Directives Found</p>
 			<p class="text-xs text-slate-500 mt-1">Issue institutional privacy policies, directives, or physical security guidelines to record accountability.</p>
 		</div>
 	{:else}
 		<div class="grid grid-cols-1 gap-3">
 			{#each filteredMemos as memo (memo.id)}
 				{@const pil = PILLARS.find(p => p.value === memo.pillar)}
-				<div class="bg-slate-900/70 border border-slate-800 hover:border-slate-700 rounded-xl p-4.5 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+				<div class="bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-4.5 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
 					<div class="space-y-1.5 flex-1 min-w-0">
 						<div class="flex flex-wrap items-center gap-2">
-							<span class="font-mono text-xs font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/40">
+							<span class="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
 								{memo.memo_number}
 							</span>
 							{#if pil}
@@ -192,16 +192,16 @@
 
 						<button
 							type="button"
-							class="text-left font-semibold text-white text-base hover:text-blue-400 transition-colors block cursor-pointer"
+							class="text-left font-bold text-slate-900 text-base hover:text-blue-600 transition-colors block cursor-pointer"
 							on:click={() => previewMemo = memo}
 						>
 							{memo.title}
 						</button>
 
-						<div class="text-xs text-slate-400 flex items-center gap-2">
-							<span>Target: <strong class="text-slate-200">{memo.target_dept_name || 'All Processing Units'}</strong></span>
+						<div class="text-xs text-slate-600 flex items-center gap-2">
+							<span>Target: <strong class="text-slate-900">{memo.target_dept_name || 'All Processing Units'}</strong></span>
 							<span>•</span>
-							<span>Sign-off: <strong class="text-slate-200">Data Protection Officer</strong></span>
+							<span>Sign-off: <strong class="text-slate-900">Data Protection Officer</strong></span>
 						</div>
 					</div>
 
@@ -209,7 +209,7 @@
 						<button
 							type="button"
 							on:click={() => previewMemo = memo}
-							class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-lg text-xs font-medium border border-slate-700 transition-all flex items-center gap-1.5"
+							class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-lg text-xs font-semibold border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer"
 						>
 							<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -221,7 +221,7 @@
 						<button
 							type="button"
 							on:click={() => handleDelete(memo.id)}
-							class="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-rose-950/30 transition-colors"
+							class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
 							aria-label="Delete memo"
 							title="Delete Directive"
 						>
@@ -238,14 +238,14 @@
 
 <!-- Modal: Create Serialized Memo -->
 {#if showCreateModal}
-	<div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-		<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-			<div class="flex items-center justify-between border-b border-slate-800 pb-3">
+	<div class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
+		<div class="bg-white border border-slate-200 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+			<div class="flex items-center justify-between border-b border-slate-100 pb-3">
 				<div>
-					<h3 class="text-lg font-bold text-white">Draft Institutional Privacy Directive</h3>
-					<p class="text-xs text-slate-400">Generates sequential serialized identifier (e.g. DPO-MEMO-2026-001).</p>
+					<h3 class="text-lg font-bold text-slate-900">Draft Institutional Privacy Directive</h3>
+					<p class="text-xs text-slate-500">Generates sequential serialized identifier (e.g. DPO-MEMO-2026-001).</p>
 				</div>
-				<button type="button" aria-label="Close dialog" on:click={() => showCreateModal = false} class="text-slate-400 hover:text-white p-1 rounded-lg">
+				<button type="button" aria-label="Close dialog" on:click={() => showCreateModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
@@ -254,24 +254,24 @@
 
 			<form on:submit|preventDefault={handleCreate} class="space-y-4">
 				<div>
-					<label for="memo-title" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Subject / Directive Title *</label>
+					<label for="memo-title" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Subject / Directive Title *</label>
 					<input
 						id="memo-title"
 						type="text"
 						bind:value={title}
 						placeholder="Mandatory 90-Day Password Rotation and Workstation Lockout Policy"
 						required
-						class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+						class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-600"
 					/>
 				</div>
 
 				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 					<div>
-						<label for="memo-pillar" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Security Pillar / Category</label>
+						<label for="memo-pillar" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Security Pillar / Category</label>
 						<select
 							id="memo-pillar"
 							bind:value={pillar}
-							class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+							class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-600"
 						>
 							{#each PILLARS as p}
 								<option value={p.value}>{p.label}</option>
@@ -280,11 +280,11 @@
 					</div>
 
 					<div>
-						<label for="memo-dept" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Target Department</label>
+						<label for="memo-dept" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Target Department</label>
 						<select
 							id="memo-dept"
 							bind:value={targetDeptId}
-							class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+							class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-600"
 						>
 							<option value="">All Personnel & Processing Units</option>
 							{#each departments as d}
@@ -295,28 +295,28 @@
 				</div>
 
 				<div>
-					<label for="memo-body" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Directive Body & Statutory Instructions *</label>
+					<label for="memo-body" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Directive Body & Statutory Instructions *</label>
 					<textarea
 						id="memo-body"
 						bind:value={content}
 						rows="8"
 						placeholder="Pursuant to Republic Act No. 10173 and NPC Circular 16-03, all personnel handling personal information are hereby directed to strictly enforce..."
 						required
-						class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 font-sans leading-relaxed"
+						class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-blue-600 font-sans leading-relaxed"
 					></textarea>
 				</div>
 
-				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
 					<button
 						type="button"
 						on:click={() => showCreateModal = false}
-						class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg"
+						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg"
 					>
 						Cancel
 					</button>
 					<button
 						type="submit"
-						class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg shadow-lg shadow-blue-900/30"
+						class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg shadow-xs"
 					>
 						Issue & Seal Directive
 					</button>
@@ -332,28 +332,28 @@
 	{@const pil = PILLARS.find(p => p.value === memo.pillar)}
 
 	<!-- Screen Modal Overlay -->
-	<div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 print:p-0 print:static print:bg-white">
-		<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl space-y-6 print:border-none print:shadow-none print:p-0 print:text-black print:bg-white print:max-h-none">
+	<div class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 print:p-0 print:static print:bg-white">
+		<div class="bg-white border border-slate-200 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl space-y-6 print:border-none print:shadow-none print:p-0 print:text-black print:bg-white print:max-h-none">
 			<!-- Screen Action Bar -->
-			<div class="flex items-center justify-between border-b border-slate-800 pb-4 print:hidden">
+			<div class="flex items-center justify-between border-b border-slate-100 pb-4 print:hidden">
 				<div class="flex items-center gap-2">
-					<span class="font-mono text-xs font-bold text-blue-400 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/40">
+					<span class="font-mono text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
 						{memo.memo_number}
 					</span>
-					<span class="text-xs text-slate-400">Institutional Letterhead Preview</span>
+					<span class="text-xs text-slate-500">Institutional Letterhead Preview</span>
 				</div>
 				<div class="flex items-center gap-2">
 					<button
 						type="button"
 						on:click={printMemo}
-						class="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-md"
+						class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-xs"
 					>
 						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
 						</svg>
 						Print Official Memo
 					</button>
-					<button type="button" aria-label="Close preview" on:click={() => previewMemo = null} class="text-slate-400 hover:text-white p-1 rounded-lg">
+					<button type="button" aria-label="Close preview" on:click={() => previewMemo = null} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 						</svg>

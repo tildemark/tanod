@@ -7,7 +7,9 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+	<link rel="icon" type="image/x-icon" href="/favicon.ico?v=2" />
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon.png?v=2" />
+	<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
 	<title>TANOD Desktop - Privacy-First Local DPO Workspace</title>
 </svelte:head>
 

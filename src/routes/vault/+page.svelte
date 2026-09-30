@@ -237,16 +237,16 @@
 
 <div class="space-y-6">
 	<!-- Header -->
-	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
 		<div>
 			<div class="flex items-center gap-2">
-				<span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/40">
+				<span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
 					NPC Circular 2022-04 Compliance Records
 				</span>
-				<span class="text-xs text-slate-500">Local Encrypted Statutory Vault</span>
+				<span class="text-xs text-slate-500 font-mono">Local Encrypted Statutory Vault</span>
 			</div>
-			<h1 class="text-2xl font-bold text-white tracking-tight mt-1">Statutory Document Vault</h1>
-			<p class="text-sm text-slate-400 mt-1 max-w-2xl">
+			<h1 class="text-2xl font-bold text-slate-900 tracking-tight mt-1">Statutory Document Vault</h1>
+			<p class="text-sm text-slate-600 mt-1 max-w-2xl">
 				Archive your official corporate proofs, SEC GIS, Secretary's Certificates, notarized DPO applications, and NPC Seals organized strictly by compliance year.
 			</p>
 		</div>
@@ -255,10 +255,10 @@
 			<button
 				type="button"
 				on:click={handleOpenVaultFolder}
-				class="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium border border-slate-700 transition-all cursor-pointer"
+				class="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 transition-all cursor-pointer shadow-2xs"
 				title="Open Year Folder in Windows Explorer"
 			>
-				<svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+				<svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
 				</svg>
 				Open {activeYear} Folder
@@ -267,7 +267,7 @@
 			<button
 				type="button"
 				on:click={() => { resetUploadForm(); showUploadModal = true; }}
-				class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-medium text-sm shadow-lg shadow-emerald-900/20 transition-all cursor-pointer"
+				class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-xs transition-all cursor-pointer"
 			>
 				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -278,14 +278,14 @@
 	</div>
 
 	<!-- Year Selector Tabs -->
-	<div class="flex items-center justify-between gap-4 flex-wrap border-b border-slate-800/80 pb-3">
+	<div class="flex items-center justify-between gap-4 flex-wrap border-b border-slate-200 pb-3">
 		<div class="flex items-center gap-2">
-			<span class="text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1">Compliance Year:</span>
+			<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">Compliance Year:</span>
 			{#each availableYears as yr}
 				<button
 					type="button"
 					on:click={() => activeYear = yr}
-					class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {activeYear === yr ? 'bg-emerald-600 text-white shadow-md shadow-emerald-950/40' : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'}"
+					class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {activeYear === yr ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'}"
 				>
 					{yr} Archive
 				</button>
@@ -294,17 +294,17 @@
 
 		<!-- Annual Health Metric -->
 		<div class="flex items-center gap-3">
-			<span class="text-xs text-slate-400">
+			<span class="text-xs text-slate-600 font-medium">
 				{activeYear} Statutory Health:
 			</span>
 			<div class="flex items-center gap-2">
-				<div class="w-24 bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+				<div class="w-24 bg-slate-200 rounded-full h-2 overflow-hidden border border-slate-300">
 					<div
 						class="h-full rounded-full transition-all duration-500 {complianceRate === 100 ? 'bg-emerald-500' : complianceRate >= 60 ? 'bg-amber-500' : 'bg-rose-500'}"
 						style="width: {complianceRate}%"
 					></div>
 				</div>
-				<span class="text-xs font-mono font-bold {complianceRate === 100 ? 'text-emerald-400' : complianceRate >= 60 ? 'text-amber-400' : 'text-rose-400'}">
+				<span class="text-xs font-mono font-bold {complianceRate === 100 ? 'text-emerald-700' : complianceRate >= 60 ? 'text-amber-700' : 'text-rose-700'}">
 					{complianceRate}%
 				</span>
 			</div>
@@ -312,29 +312,29 @@
 	</div>
 
 	<!-- Statutory Annual Requirements Checklist Bar -->
-	<div class="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-		<h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3 flex items-center justify-between">
+	<div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs">
+		<h3 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3 flex items-center justify-between">
 			<span>NPC Circular 2022-04 Mandatory Filing Checklist for {activeYear}</span>
-			<span class="text-[11px] text-slate-400 font-normal">Audit-Ready State</span>
+			<span class="text-[11px] text-slate-500 font-normal">Audit-Ready State</span>
 		</h3>
 		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
 			{#each statutoryChecklist as item}
-				<div class="p-3 rounded-lg border text-xs {item.isCompliant ? 'bg-emerald-950/30 border-emerald-800/50 text-emerald-300' : 'bg-slate-950/60 border-slate-800 text-slate-400'}">
+				<div class="p-3 rounded-lg border text-xs {item.isCompliant ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-500'}">
 					<div class="flex items-center justify-between mb-1">
-						<span class="font-bold">{item.isCompliant ? '✓ Archived' : '○ Pending'}</span>
+						<span class="font-bold {item.isCompliant ? 'text-emerald-700' : 'text-slate-500'}">{item.isCompliant ? '✓ Archived' : '○ Pending'}</span>
 						{#if item.document}
 							{@const doc = item.document}
 							<button
 								type="button"
 								on:click={() => handleOpenFile(doc.file_path)}
-								class="text-[10px] text-emerald-400 hover:underline cursor-pointer"
+								class="text-[10px] text-emerald-700 font-semibold hover:underline cursor-pointer"
 							>
 								View File
 							</button>
 						{/if}
 					</div>
-					<div class="font-semibold text-slate-200 truncate">{item.category.label}</div>
-					<div class="text-[10px] text-slate-400 mt-1 line-clamp-1">{item.category.desc}</div>
+					<div class="font-semibold text-slate-900 truncate">{item.category.label}</div>
+					<div class="text-[10px] text-slate-500 mt-1 line-clamp-1">{item.category.desc}</div>
 				</div>
 			{/each}
 		</div>
@@ -342,25 +342,25 @@
 
 	<!-- Documents Grid -->
 	{#if loading}
-		<div class="p-12 text-center text-slate-500 bg-slate-900/30 rounded-xl border border-slate-800">
+		<div class="p-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200 shadow-2xs">
 			<div class="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-3"></div>
 			Loading Statutory Documents...
 		</div>
 	{:else if yearDocuments.length === 0}
-		<div class="p-12 text-center text-slate-500 bg-slate-900/30 rounded-xl border border-slate-800">
-			<div class="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-3">
+		<div class="p-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200 shadow-2xs">
+			<div class="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-3">
 				<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 				</svg>
 			</div>
-			<p class="font-medium text-slate-300">No Documents Uploaded for {activeYear}</p>
+			<p class="font-bold text-slate-800">No Documents Uploaded for {activeYear}</p>
 			<p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
 				Upload your SEC GIS, Secretary's Certificate, notarized NPCRS DPO application, or NPC Certificate of Registration to maintain annual audit compliance.
 			</p>
 			<button
 				type="button"
 				on:click={() => { resetUploadForm(); showUploadModal = true; }}
-				class="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold"
+				class="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs"
 			>
 				Upload {activeYear} File
 			</button>
@@ -369,7 +369,7 @@
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 			{#each yearDocuments as doc (doc.id)}
 				{@const cat = CATEGORIES.find(c => c.value === doc.category)}
-				<div class="bg-slate-900/80 border border-slate-800 hover:border-slate-700 rounded-xl p-4.5 transition-all flex flex-col justify-between group">
+				<div class="bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-4.5 transition-all flex flex-col justify-between group shadow-2xs">
 					<div class="space-y-3">
 						<!-- Category badge & year -->
 						<div class="flex items-center justify-between gap-2">
@@ -385,23 +385,23 @@
 
 						<!-- Document Title -->
 						<div>
-							<h3 class="font-bold text-white text-base group-hover:text-emerald-400 transition-colors line-clamp-2">
+							<h3 class="font-bold text-slate-900 text-base group-hover:text-emerald-700 transition-colors line-clamp-2">
 								{doc.title}
 							</h3>
-							<div class="text-xs font-mono text-slate-400 mt-1 truncate">
+							<div class="text-xs font-mono text-slate-500 mt-1 truncate">
 								📁 {doc.file_name}
 							</div>
 						</div>
 
 						{#if doc.notes}
-							<p class="text-xs text-slate-300 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 line-clamp-2">
+							<p class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200 line-clamp-2">
 								{doc.notes}
 							</p>
 						{/if}
 					</div>
 
 					<!-- Card Footer Actions -->
-					<div class="pt-4 border-t border-slate-800/80 mt-4 flex items-center justify-between">
+					<div class="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between">
 						<span class="text-[10px] text-slate-500 font-mono">
 							{new Date(doc.uploaded_at || '').toLocaleDateString()}
 						</span>
@@ -440,14 +440,14 @@
 
 <!-- Upload Modal -->
 {#if showUploadModal}
-	<div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-		<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-			<div class="flex items-center justify-between border-b border-slate-800 pb-3">
+	<div class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
+		<div class="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+			<div class="flex items-center justify-between border-b border-slate-100 pb-3">
 				<div>
-					<h3 class="text-lg font-bold text-white">Deposit into Statutory Document Vault</h3>
-					<p class="text-xs text-slate-400">File is stored locally under %APPDATA%\tanod\vault\{uploadYear}\</p>
+					<h3 class="text-lg font-bold text-slate-900">Deposit into Statutory Document Vault</h3>
+					<p class="text-xs text-slate-500">File is stored locally under %APPDATA%\tanod\vault\{uploadYear}\</p>
 				</div>
-				<button type="button" aria-label="Close dialog" on:click={() => showUploadModal = false} class="text-slate-400 hover:text-white p-1 rounded-lg">
+				<button type="button" aria-label="Close dialog" on:click={() => showUploadModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
@@ -457,11 +457,11 @@
 			<form on:submit|preventDefault={handleUpload} class="space-y-4">
 				<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 					<div class="sm:col-span-2">
-						<label for="vault-category" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Document Category *</label>
+						<label for="vault-category" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Document Category *</label>
 						<select
 							id="vault-category"
 							bind:value={uploadCategory}
-							class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+							class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
 						>
 							{#each CATEGORIES as cat}
 								<option value={cat.value}>{cat.label}</option>
@@ -470,7 +470,7 @@
 					</div>
 
 					<div>
-						<label for="vault-year" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Filing Year *</label>
+						<label for="vault-year" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Filing Year *</label>
 						<input
 							id="vault-year"
 							type="number"
@@ -478,63 +478,63 @@
 							min="2012"
 							max="2035"
 							required
-							class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 font-mono"
+							class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 font-mono"
 						/>
 					</div>
 				</div>
 
 				<div>
-					<label for="vault-title" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Document Title / Description *</label>
+					<label for="vault-title" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Document Title / Description *</label>
 					<input
 						id="vault-title"
 						type="text"
 						bind:value={uploadTitle}
 						placeholder="e.g. 2026 Notarized DPO Registration Form & Certificate"
 						required
-						class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+						class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
 					/>
 				</div>
 
 				<div>
-					<label for="vault-file" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">File Attachment (PDF, JPG, PNG, DOCX) *</label>
+					<label for="vault-file" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">File Attachment (PDF, JPG, PNG, DOCX) *</label>
 					<input
 						id="vault-file"
 						type="file"
 						on:change={handleFileSelect}
 						required
 						accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-						class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-300 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-950 file:text-emerald-400 hover:file:bg-emerald-900 cursor-pointer"
+						class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs text-slate-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer"
 					/>
 					{#if selectedFile}
-						<div class="mt-1.5 text-[11px] text-emerald-400 font-mono">
+						<div class="mt-1.5 text-[11px] text-emerald-700 font-mono font-medium">
 							Selected: {selectedFile.name} ({formatBytes(selectedFile.size)})
 						</div>
 					{/if}
 				</div>
 
 				<div>
-					<label for="vault-notes" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Compliance Notes (Optional)</label>
+					<label for="vault-notes" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Compliance Notes (Optional)</label>
 					<textarea
 						id="vault-notes"
 						bind:value={uploadNotes}
 						rows="2"
 						placeholder="Notarized on Jan 15, 2026 by Atty. Dela Cruz with Notarial Commission #12345..."
-						class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 placeholder-slate-600"
+						class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 placeholder-slate-400"
 					></textarea>
 				</div>
 
-				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
 					<button
 						type="button"
 						on:click={() => showUploadModal = false}
-						class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg"
+						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg"
 					>
 						Cancel
 					</button>
 					<button
 						type="submit"
 						disabled={isUploading}
-						class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg shadow-lg shadow-emerald-900/30 flex items-center gap-2 cursor-pointer"
+						class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg shadow-sm flex items-center gap-2 cursor-pointer"
 					>
 						{#if isUploading}
 							<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>

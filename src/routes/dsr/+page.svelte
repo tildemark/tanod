@@ -170,16 +170,16 @@
 
 <div class="space-y-6">
 	<!-- Header -->
-	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+	<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
 		<div>
 			<div class="flex items-center gap-2">
-				<span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/40">
+				<span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
 					RA 10173 Chapter IV
 				</span>
-				<span class="text-xs text-slate-500">Statutory 30-Day SLA Enforcement</span>
+				<span class="text-xs text-slate-500 font-mono">Statutory 30-Day SLA Enforcement</span>
 			</div>
-			<h1 class="text-2xl font-bold text-white tracking-tight mt-1">Data Subject Rights (DSR) Kanban</h1>
-			<p class="text-sm text-slate-400 mt-1 max-w-2xl">
+			<h1 class="text-2xl font-bold text-slate-900 tracking-tight mt-1">Data Subject Rights (DSR) Kanban</h1>
+			<p class="text-sm text-slate-600 mt-1 max-w-2xl">
 				Monitor and resolve data subject requests (Access, Rectification, Erasure, Portability, Objection) with statutory 30-day timeline tracking.
 			</p>
 		</div>
@@ -188,7 +188,7 @@
 			<button
 				type="button"
 				on:click={() => { resetForm(); showModal = true; }}
-				class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg font-medium text-sm shadow-lg shadow-emerald-900/20 transition-all cursor-pointer"
+				class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-xs transition-all cursor-pointer"
 			>
 				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -200,19 +200,19 @@
 
 	<!-- Kanban Board -->
 	{#if loading}
-		<div class="p-12 text-center text-slate-500 bg-slate-900/30 rounded-xl border border-slate-800">
+		<div class="p-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200 shadow-2xs">
 			<div class="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-3"></div>
 			Loading DSR Registry...
 		</div>
 	{:else}
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 			{#each COLUMNS as col}
-				<div class="flex flex-col rounded-xl border {col.border} {col.bg} p-3 min-h-[550px]">
+				<div class="flex flex-col rounded-xl border border-slate-200 bg-slate-100/70 p-3 min-h-[550px] shadow-2xs">
 					<!-- Column Header -->
-					<div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3 px-1">
+					<div class="flex items-center justify-between pb-3 border-b border-slate-200 mb-3 px-1">
 						<div class="flex items-center gap-2">
-							<span class="font-semibold text-sm text-slate-200">{col.label}</span>
-							<span class="text-xs px-2 py-0.5 rounded-full {col.badge} font-mono font-medium">
+							<span class="font-bold text-sm text-slate-900">{col.label}</span>
+							<span class="text-xs px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-700 font-mono font-semibold">
 								{itemsByColumn[col.id].length}
 							</span>
 						</div>
@@ -229,7 +229,7 @@
 							{@const sla = getSlaDetails(item.sla_deadline)}
 							<div
 								animate:flip={{ duration: 200 }}
-								class="bg-slate-900/90 border border-slate-800 hover:border-slate-700 rounded-lg p-3.5 shadow-sm transition-all cursor-grab active:cursor-grabbing hover:shadow-md text-left group"
+								class="bg-white border border-slate-200 hover:border-slate-300 rounded-lg p-3.5 shadow-2xs transition-all cursor-grab active:cursor-grabbing hover:shadow-xs text-left group"
 								on:click={() => selectedRequest = item}
 								role="button"
 								tabindex="0"
@@ -296,14 +296,14 @@
 
 <!-- Log DSR Modal -->
 {#if showModal}
-	<div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-		<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-			<div class="flex items-center justify-between border-b border-slate-800 pb-3">
+	<div class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
+		<div class="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+			<div class="flex items-center justify-between border-b border-slate-100 pb-3">
 				<div>
-					<h3 class="text-lg font-bold text-white">Log Data Subject Rights (DSR) Request</h3>
-					<p class="text-xs text-slate-400">RA 10173 mandates response within thirty (30) calendar days.</p>
+					<h3 class="text-lg font-bold text-slate-900">Log Data Subject Rights (DSR) Request</h3>
+					<p class="text-xs text-slate-500">RA 10173 mandates response within thirty (30) calendar days.</p>
 				</div>
-				<button type="button" aria-label="Close modal" on:click={() => showModal = false} class="text-slate-400 hover:text-white p-1 rounded-lg">
+				<button type="button" aria-label="Close modal" on:click={() => showModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
@@ -312,14 +312,14 @@
 
 			<form on:submit|preventDefault={handleCreate} class="space-y-4">
 				<div>
-					<span class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Right Invoked</span>
+					<span class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Right Invoked</span>
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
 						{#each DSR_TYPES as t}
-							<label class="flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-all {requestType === t.value ? 'bg-emerald-950/40 border-emerald-500 text-white' : 'bg-slate-800/40 border-slate-700/60 text-slate-300 hover:bg-slate-800'}">
-								<input type="radio" bind:group={requestType} value={t.value} class="mt-0.5 text-emerald-500 focus:ring-emerald-500" />
+							<label class="flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer transition-all {requestType === t.value ? 'bg-emerald-50 border-emerald-500 text-slate-900 ring-1 ring-emerald-500' : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'}">
+								<input type="radio" bind:group={requestType} value={t.value} class="mt-0.5 text-emerald-600 focus:ring-emerald-600" />
 								<div>
-									<div class="text-xs font-medium">{t.label}</div>
-									<div class="text-[10px] text-slate-400">{t.desc}</div>
+									<div class="text-xs font-bold text-slate-900">{t.label}</div>
+									<div class="text-[10px] text-slate-500">{t.desc}</div>
 								</div>
 							</label>
 						{/each}
@@ -328,52 +328,52 @@
 
 				<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
 					<div>
-						<label for="dsr-name" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Data Subject Name *</label>
+						<label for="dsr-name" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Data Subject Name *</label>
 						<input
 							id="dsr-name"
 							type="text"
 							bind:value={requesterName}
 							placeholder="Juan Dela Cruz"
 							required
-							class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+							class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
 						/>
 					</div>
 
 					<div>
-						<label for="dsr-email" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Contact Email *</label>
+						<label for="dsr-email" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Contact Email *</label>
 						<input
 							id="dsr-email"
 							type="email"
 							bind:value={requesterEmail}
 							placeholder="juan.delacruz@example.com"
 							required
-							class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+							class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-600"
 						/>
 					</div>
 				</div>
 
 				<div>
-					<label for="dsr-notes" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">Request Particulars & Scope</label>
+					<label for="dsr-notes" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Request Particulars & Scope</label>
 					<textarea
 						id="dsr-notes"
 						bind:value={notes}
 						rows="3"
 						placeholder="Specify the specific processing system, database, or records requested for access, rectification, or deletion..."
-						class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500 placeholder-slate-600"
+						class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-emerald-600 placeholder-slate-400"
 					></textarea>
 				</div>
 
-				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
 					<button
 						type="button"
 						on:click={() => showModal = false}
-						class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg"
+						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg"
 					>
 						Cancel
 					</button>
 					<button
 						type="submit"
-						class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg shadow-lg shadow-emerald-900/30"
+						class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg shadow-xs"
 					>
 						Record Statutory Request
 					</button>
@@ -387,9 +387,9 @@
 {#if selectedRequest}
 	{@const req = selectedRequest}
 	{@const sla = getSlaDetails(req.sla_deadline)}
-	<div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-		<div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
-			<div class="flex items-center justify-between border-b border-slate-800 pb-3">
+	<div class="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4">
+		<div class="bg-white border border-slate-200 rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-150">
+			<div class="flex items-center justify-between border-b border-slate-100 pb-3">
 				<div>
 					<div class="flex items-center gap-2">
 						<span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded {getBadgeForType(req.request_type)}">
@@ -397,9 +397,9 @@
 						</span>
 						<span class="text-xs text-slate-400 font-mono">DSR-{req.id.slice(0, 8)}</span>
 					</div>
-					<h3 class="text-lg font-bold text-white mt-1">{req.requester_name}</h3>
+					<h3 class="text-lg font-bold text-slate-900 mt-1">{req.requester_name}</h3>
 				</div>
-				<button type="button" aria-label="Close details" on:click={() => selectedRequest = null} class="text-slate-400 hover:text-white p-1 rounded-lg">
+				<button type="button" aria-label="Close details" on:click={() => selectedRequest = null} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
@@ -407,22 +407,22 @@
 			</div>
 
 			<div class="space-y-4 text-sm">
-				<div class="grid grid-cols-2 gap-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+				<div class="grid grid-cols-2 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
 					<div>
-						<div class="text-xs text-slate-400">Email Address</div>
-						<div class="font-medium text-slate-200 truncate">{req.requester_email}</div>
+						<div class="text-xs text-slate-500 font-medium">Email Address</div>
+						<div class="font-semibold text-slate-800 truncate">{req.requester_email}</div>
 					</div>
 					<div>
-						<div class="text-xs text-slate-400">Current Status</div>
-						<div class="font-semibold text-emerald-400">{req.status}</div>
+						<div class="text-xs text-slate-500 font-medium">Current Status</div>
+						<div class="font-bold text-emerald-700">{req.status}</div>
 					</div>
 					<div>
-						<div class="text-xs text-slate-400">Date Received</div>
-						<div class="font-medium text-slate-200">{new Date(req.received_date).toLocaleDateString()}</div>
+						<div class="text-xs text-slate-500 font-medium">Date Received</div>
+						<div class="font-semibold text-slate-800">{new Date(req.received_date).toLocaleDateString()}</div>
 					</div>
 					<div>
-						<div class="text-xs text-slate-400">30-Day SLA Deadline</div>
-						<div class="font-bold {sla.isOverdue ? 'text-rose-400' : 'text-slate-200'}">
+						<div class="text-xs text-slate-500 font-medium">30-Day SLA Deadline</div>
+						<div class="font-bold {sla.isOverdue ? 'text-rose-600' : 'text-slate-800'}">
 							{new Date(req.sla_deadline).toLocaleDateString()} ({sla.diffDays}d)
 						</div>
 					</div>
@@ -430,16 +430,16 @@
 
 				{#if req.notes}
 					<div>
-						<div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Request Details & Scope</div>
-						<div class="p-3 rounded bg-slate-950 border border-slate-800 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+						<div class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Request Details & Scope</div>
+						<div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
 							{req.notes}
 						</div>
 					</div>
 				{/if}
 
 				<!-- Manual Status Progression -->
-				<div class="pt-3 border-t border-slate-800">
-					<div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Advance Workflow Stage</div>
+				<div class="pt-3 border-t border-slate-100">
+					<div class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Advance Workflow Stage</div>
 					<div class="flex flex-wrap gap-2">
 						{#each COLUMNS as col}
 							<button
@@ -451,7 +451,7 @@
 										await loadRequests();
 									}
 								}}
-								class="px-3 py-1.5 rounded text-xs font-medium border transition-all cursor-pointer {req.status === col.id ? 'bg-emerald-600 border-emerald-500 text-white font-semibold' : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-800'}"
+								class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer {req.status === col.id ? 'bg-slate-900 border-slate-900 text-white shadow-xs' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'}"
 							>
 								{col.label}
 							</button>
@@ -460,18 +460,18 @@
 				</div>
 			</div>
 
-			<div class="flex items-center justify-between pt-3 border-t border-slate-800">
+			<div class="flex items-center justify-between pt-3 border-t border-slate-100">
 				<button
 					type="button"
 					on:click={() => handleDelete(req.id)}
-					class="text-xs text-rose-400 hover:text-rose-300 font-medium px-2 py-1 rounded hover:bg-rose-950/40"
+					class="text-xs text-rose-600 hover:text-rose-700 font-semibold px-2 py-1 rounded hover:bg-rose-50 cursor-pointer"
 				>
 					Delete Entry
 				</button>
 				<button
 					type="button"
 					on:click={() => selectedRequest = null}
-					class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg"
+					class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg cursor-pointer"
 				>
 					Close
 				</button>
