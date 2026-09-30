@@ -20,6 +20,8 @@
     Building2,
     Calendar,
     FileText,
+    LayoutGrid,
+    List,
     X
   } from 'lucide-svelte';
 
@@ -27,6 +29,9 @@
   let processes = $state<Process[]>([]);
   let isLoading = $state(true);
   let statusMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // View Mode: 4x4 Risk Matrix Quadrant vs Detailed List
+  let viewMode = $state<'quadrant' | 'list'>('quadrant');
 
   // Filter state
   let searchQuery = $state('');
@@ -172,9 +177,31 @@
       <span class="px-2.5 py-1 rounded-md bg-rose-50 text-rose-900 border border-rose-200 font-semibold">10–16: High Risk</span>
     </div>
 
-    <!-- Filter Dropdown -->
+    <!-- Filter Dropdown & View Mode Switcher -->
     <div class="flex items-center gap-2">
-      <div class="relative w-64">
+      <!-- View Mode Buttons -->
+      <div class="flex items-center p-0.5 rounded-lg border border-slate-300 bg-slate-100">
+        <button
+          type="button"
+          onclick={() => (viewMode = 'quadrant')}
+          class="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all {viewMode === 'quadrant' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
+          title="Interactive 4x4 Risk Matrix Quadrant (Gartner-style heat map)"
+        >
+          <LayoutGrid class="h-3.5 w-3.5" />
+          <span>Matrix Quadrant</span>
+        </button>
+        <button
+          type="button"
+          onclick={() => (viewMode = 'list')}
+          class="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold transition-all {viewMode === 'list' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
+          title="List of assessed processing activities"
+        >
+          <List class="h-3.5 w-3.5" />
+          <span>List View</span>
+        </button>
+      </div>
+
+      <div class="relative w-56">
         <Search class="h-3.5 w-3.5 text-slate-400 absolute left-3 top-2.5" />
         <input
           type="text"
@@ -197,8 +224,136 @@
     </div>
   </div>
 
+  <!-- GARTNER-STYLE 4×4 RISK MATRIX QUADRANT (NPC Advisory 17-03) -->
+  {#if viewMode === 'quadrant'}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-6 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <LayoutGrid class="h-4 w-4 text-emerald-600" />
+            <span>NPC 4×4 Risk Diagnostic Quadrant (Gartner-Style Heat Map)</span>
+          </h3>
+          <p class="text-[11px] text-slate-500 mt-0.5">
+            Plotting Impact to Rights & Freedoms (Y-Axis) against Probability of Occurrence (X-Axis) per NPC Advisory 2017-03.
+          </p>
+        </div>
+        <div class="flex items-center gap-3 text-xs font-mono">
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-sm bg-rose-500"></span>
+            <span class="text-slate-600 text-[11px]">High (10-16)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-sm bg-amber-400"></span>
+            <span class="text-slate-600 text-[11px]">Med (6-9)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-sm bg-emerald-400"></span>
+            <span class="text-slate-600 text-[11px]">Low (2-4)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-sm bg-blue-300"></span>
+            <span class="text-slate-600 text-[11px]">Negligible (1)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- The 4x4 Grid Container -->
+      <div class="flex gap-4">
+        <!-- Y-Axis Label: Impact -->
+        <div class="flex flex-col items-center justify-center shrink-0 w-8">
+          <span class="-rotate-90 text-xs font-bold uppercase tracking-wider text-slate-600 font-mono whitespace-nowrap">
+            Impact to Rights & Freedoms →
+          </span>
+        </div>
+
+        <div class="flex-1 space-y-3">
+          <!-- 4 Rows (Impact 4 down to 1) -->
+          <div class="grid grid-cols-4 gap-2.5">
+            {#each [4, 3, 2, 1] as imp}
+              {#each [1, 2, 3, 4] as prob}
+                {@const score = imp * prob}
+                {@const cellRisk = score === 1 ? 'NEGLIGIBLE' : score <= 4 ? 'LOW' : score <= 9 ? 'MEDIUM' : 'HIGH'}
+                {@const cellAssessments = filteredAssessments.filter(a => a.impact_score === imp && a.probability_score === prob)}
+                <div
+                  class="rounded-xl border p-2.5 min-h-[110px] flex flex-col justify-between transition-all {
+                    cellRisk === 'HIGH'
+                      ? 'bg-rose-50/70 border-rose-200/90 hover:bg-rose-100/70'
+                      : cellRisk === 'MEDIUM'
+                      ? 'bg-amber-50/70 border-amber-200/90 hover:bg-amber-100/70'
+                      : cellRisk === 'LOW'
+                      ? 'bg-emerald-50/70 border-emerald-200/90 hover:bg-emerald-100/70'
+                      : 'bg-blue-50/70 border-blue-200/90 hover:bg-blue-100/70'
+                  }"
+                >
+                  <!-- Cell Header: Coordinates & Score -->
+                  <div class="flex items-center justify-between text-[10px] font-mono">
+                    <span class="font-bold {
+                      cellRisk === 'HIGH' ? 'text-rose-900' : cellRisk === 'MEDIUM' ? 'text-amber-900' : cellRisk === 'LOW' ? 'text-emerald-900' : 'text-blue-900'
+                    }">
+                      I:{imp} × P:{prob}
+                    </span>
+                    <span class="px-1.5 py-0.5 rounded font-bold {
+                      cellRisk === 'HIGH' ? 'bg-rose-200/80 text-rose-900' : cellRisk === 'MEDIUM' ? 'bg-amber-200/80 text-amber-900' : cellRisk === 'LOW' ? 'bg-emerald-200/80 text-emerald-900' : 'bg-blue-200/80 text-blue-900'
+                    }">
+                      {score}
+                    </span>
+                  </div>
+
+                  <!-- Plotted Processes in this Cell -->
+                  <div class="space-y-1.5 my-1.5 max-h-24 overflow-y-auto">
+                    {#if cellAssessments.length === 0}
+                      <span class="text-[10px] text-slate-400 italic font-mono block text-center pt-2">No activities</span>
+                    {:else}
+                      {#each cellAssessments as item}
+                        <button
+                          type="button"
+                          onclick={() => openEditWizard(item)}
+                          class="w-full text-left p-1.5 rounded-lg bg-white/90 hover:bg-white border border-slate-200 shadow-2xs transition-transform hover:-translate-y-0.5 cursor-pointer block group"
+                          title="{item.process_title} ({item.department_name}) - Click to review"
+                        >
+                          <div class="text-[11px] font-bold text-slate-900 truncate group-hover:text-emerald-700">
+                            {item.process_title}
+                          </div>
+                          <div class="text-[9px] text-slate-500 font-mono truncate">
+                            {item.department_name || 'Organization'}
+                          </div>
+                        </button>
+                      {/each}
+                    {/if}
+                  </div>
+
+                  <!-- Bottom count -->
+                  <div class="text-[9px] text-slate-500 font-mono text-right">
+                    {cellAssessments.length} {cellAssessments.length === 1 ? 'item' : 'items'}
+                  </div>
+                </div>
+              {/each}
+            {/each}
+          </div>
+
+          <!-- X-Axis Label: Probability -->
+          <div class="grid grid-cols-4 gap-2.5 pt-1 text-center font-mono text-xs font-bold text-slate-600">
+            <div>P1: Low / Rare</div>
+            <div>P2: Moderate / Unlikely</div>
+            <div>P3: High / Likely</div>
+            <div>P4: Extreme / Almost Certain</div>
+          </div>
+          <div class="text-center font-mono text-xs font-bold uppercase tracking-wider text-slate-600 pt-0.5">
+            Probability of Occurrence (Likelihood) →
+          </div>
+        </div>
+      </div>
+    </div>
+  {/if}
+
   <!-- Assessment Registry Cards / Table -->
   <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+    <div class="px-6 py-3 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+      <span class="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono">
+        Assessed Activities Register ({filteredAssessments.length})
+      </span>
+      <span class="text-[11px] text-slate-500 font-mono">DPA Sec. 16 Compliant</span>
+    </div>
     <div class="divide-y divide-slate-100">
       {#each filteredAssessments as a}
         <div class="p-6 flex items-start justify-between gap-6 hover:bg-slate-50/60 transition-colors">
