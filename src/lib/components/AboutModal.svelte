@@ -10,7 +10,7 @@
 
   const app = {
     name: 'TANOD Desktop',
-    version: '0.1.0',
+    version: '1.0.0',
     releaseChannel: 'Stable Production',
     license: 'MIT License (Open-Source Sovereign Privacy)',
     buildDate: '2026-10-01'
