@@ -17,6 +17,7 @@
     "@tauri-apps/plugin-fs": "^2.0.0",
     "clsx": "^2.1.1",
     "lucide-svelte": "^0.475.0",
+    "svelte-dnd-action": "^0.9.79",
     "sveltekit-superforms": "^2.31.0",
     "tailwind-merge": "^2.6.0",
     "zod": "^4.6.5"

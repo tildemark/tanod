@@ -37,6 +37,20 @@ pub fn run() {
             commands::pia::get_pia_by_process_id,
             commands::pia::save_pia_assessment,
             commands::pia::delete_pia_assessment,
+            // Incidents & 72-Hour Timer
+            commands::enforcement::list_incidents,
+            commands::enforcement::create_incident,
+            commands::enforcement::update_incident,
+            commands::enforcement::delete_incident,
+            // Data Subject Rights (DSR) Kanban
+            commands::enforcement::list_dsr_requests,
+            commands::enforcement::create_dsr_request,
+            commands::enforcement::update_dsr_status,
+            commands::enforcement::delete_dsr_request,
+            // DPO Directives & Institutional Memos
+            commands::enforcement::list_dpo_memos,
+            commands::enforcement::create_dpo_memo,
+            commands::enforcement::delete_dpo_memo,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {
