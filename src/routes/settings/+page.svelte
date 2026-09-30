@@ -171,6 +171,11 @@
   }
 
   onMount(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'audit_trail' || tabParam === 'governance_team' || tabParam === 'departments' || tabParam === 'copypaste') {
+      activeTab = tabParam;
+    }
     loadData();
   });
 

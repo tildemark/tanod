@@ -11,7 +11,8 @@
     Shield,
     HardDrive,
     Info,
-    Archive
+    Archive,
+    History
   } from 'lucide-svelte';
 
   let currentPath = $derived($page.url.pathname);
@@ -44,6 +45,7 @@
       group: 'Administration & System',
       items: [
         { name: 'Entity & Governance', href: '/settings', icon: Settings },
+        { name: 'Immutable Audit Trail', href: '/settings?tab=audit_trail', icon: History }
       ]
     }
   ];
@@ -76,7 +78,8 @@
         </h3>
         <div class="space-y-1">
           {#each section.items as item}
-            {@const isActive = currentPath === item.href || (item.href !== '/' && currentPath.startsWith(item.href))}
+            {@const fullPath = $page.url.pathname + ($page.url.search || '')}
+            {@const isActive = fullPath === item.href || (item.href === '/settings' && fullPath === '/settings') || (item.href !== '/' && !item.href.includes('?') && currentPath.startsWith(item.href) && !fullPath.includes('tab='))}
             <a
               href={item.href}
               class="flex items-center gap-3 px-3 py-2 rounded-md text-xs font-medium transition-colors {
