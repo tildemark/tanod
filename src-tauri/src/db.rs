@@ -15,7 +15,6 @@ pub fn get_db_path() -> PathBuf {
         fs::create_dir_all(data_dir).expect("Failed to create Tanod local app data directory");
         data_dir.join("tanod.db")
     } else {
-        // Fallback to local directory if OS paths cannot be resolved
         PathBuf::from("tanod.db")
     }
 }
@@ -27,7 +26,7 @@ pub fn init_db() -> Result<Connection> {
 
     let conn = Connection::open(&db_path)?;
 
-    // Enable foreign keys
+    // Enable foreign keys and WAL mode
     conn.execute_batch(
         "PRAGMA foreign_keys = ON;
          PRAGMA journal_mode = WAL;"
@@ -38,29 +37,65 @@ pub fn init_db() -> Result<Connection> {
     Ok(conn)
 }
 
-/// Runs initial schema migrations creating all 7 statutory tables adhering strictly to NPC regulations.
+/// Runs initial schema migrations creating statutory tables strictly aligned with NPC Circular 2022-04 & RA 10173.
 fn run_migrations(conn: &Connection) -> Result<()> {
     conn.execute_batch(
         r#"
-        -- 1. Organizations (PIC/PIP Entity Profile)
+        -- 1. Organizations (PIC/PIP Entity Profile matching NPCRS requirements)
         CREATE TABLE IF NOT EXISTS organizations (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             slug TEXT UNIQUE NOT NULL,
             logo_path TEXT,
+            tin_number TEXT,
+            entity_type TEXT NOT NULL DEFAULT 'PIC' CHECK(entity_type IN ('PIC', 'PIP', 'BOTH')),
+            sector TEXT DEFAULT 'Private', -- Government, Private: Healthcare, BPO, Financial, etc.
             address TEXT,
             city TEXT,
-            country TEXT,
+            country TEXT DEFAULT 'Philippines',
             phone TEXT,
             email TEXT,
             website TEXT,
+            
+            -- Head of Agency / Head of Organization (statutory sign-off)
+            head_name TEXT,
+            head_title TEXT,
+            head_email TEXT,
+            head_phone TEXT,
+            
+            -- Primary DPO
             dpo_name TEXT,
             dpo_email TEXT,
             industry TEXT,
             description TEXT,
             employee_count INTEGER,
+            
+            -- NPCRS Official Registration Credentials
+            npc_registration_number TEXT,
+            registration_date DATE,
+            renewal_deadline DATE, -- Annual NPCRS renewal
+            has_npc_seal BOOLEAN DEFAULT 0,
+            
+            -- ASIR & Breach settings
+            asir_due_date DATE, -- Annual Security Incident Report (March 31)
             npc_notification_email TEXT DEFAULT 'privacy.complaints@privacy.gov.ph',
             breach_notification_hours INTEGER DEFAULT 72,
+            
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+
+        -- 1b. Privacy Officers (Designated Primary DPO + Multiple COPs under NPC Circular 2022-04)
+        CREATE TABLE IF NOT EXISTS privacy_officers (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            title TEXT NOT NULL,
+            email TEXT NOT NULL,
+            phone TEXT,
+            role TEXT NOT NULL CHECK(role IN ('DPO', 'COP')), -- Only 1 primary DPO allowed
+            is_primary_dpo BOOLEAN NOT NULL DEFAULT 0,
+            assigned_branch_dept TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
@@ -96,13 +131,13 @@ fn run_migrations(conn: &Connection) -> Result<()> {
         CREATE TABLE IF NOT EXISTS pia_assessments (
             id TEXT PRIMARY KEY,
             process_id TEXT NOT NULL REFERENCES processes(id) ON DELETE CASCADE,
-            threshold_answers TEXT NOT NULL DEFAULT '{}', -- JSON Object
-            data_flow_details TEXT NOT NULL DEFAULT '{}', -- JSON Object
-            privacy_principles_checklist TEXT NOT NULL DEFAULT '{}', -- JSON Object
+            threshold_answers TEXT NOT NULL DEFAULT '{}',
+            data_flow_details TEXT NOT NULL DEFAULT '{}',
+            privacy_principles_checklist TEXT NOT NULL DEFAULT '{}',
             impact_score INTEGER NOT NULL CHECK(impact_score BETWEEN 1 AND 4),
             probability_score INTEGER NOT NULL CHECK(probability_score BETWEEN 1 AND 4),
             risk_rating INTEGER GENERATED ALWAYS AS (impact_score * probability_score) STORED,
-            risk_level TEXT NOT NULL, -- 'NEGLIGIBLE', 'LOW', 'MEDIUM', 'HIGH'
+            risk_level TEXT NOT NULL,
             mitigation_solutions TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -149,10 +184,10 @@ fn run_migrations(conn: &Connection) -> Result<()> {
         CREATE TABLE IF NOT EXISTS dpo_memos (
             id TEXT PRIMARY KEY,
             org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-            memo_number TEXT UNIQUE NOT NULL, -- e.g. DPO-MEMO-2026-001
+            memo_number TEXT UNIQUE NOT NULL,
             title TEXT NOT NULL,
             pillar TEXT NOT NULL CHECK(pillar IN ('Organizational', 'Physical', 'Technical', 'Incident')),
-            target_dept_id TEXT REFERENCES departments(id) ON DELETE SET NULL, -- NULL = Org-wide
+            target_dept_id TEXT REFERENCES departments(id) ON DELETE SET NULL,
             content TEXT NOT NULL,
             issued_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -160,6 +195,26 @@ fn run_migrations(conn: &Connection) -> Result<()> {
         "#
     )?;
 
-    log::info!("Database schema migrations applied successfully.");
+    // Safe column migrations in case table was created previously without new NPCRS fields
+    let alter_statements = vec![
+        "ALTER TABLE organizations ADD COLUMN tin_number TEXT;",
+        "ALTER TABLE organizations ADD COLUMN entity_type TEXT NOT NULL DEFAULT 'PIC';",
+        "ALTER TABLE organizations ADD COLUMN sector TEXT DEFAULT 'Private';",
+        "ALTER TABLE organizations ADD COLUMN head_name TEXT;",
+        "ALTER TABLE organizations ADD COLUMN head_title TEXT;",
+        "ALTER TABLE organizations ADD COLUMN head_email TEXT;",
+        "ALTER TABLE organizations ADD COLUMN head_phone TEXT;",
+        "ALTER TABLE organizations ADD COLUMN npc_registration_number TEXT;",
+        "ALTER TABLE organizations ADD COLUMN registration_date DATE;",
+        "ALTER TABLE organizations ADD COLUMN renewal_deadline DATE;",
+        "ALTER TABLE organizations ADD COLUMN has_npc_seal BOOLEAN DEFAULT 0;",
+        "ALTER TABLE organizations ADD COLUMN asir_due_date DATE;",
+    ];
+
+    for stmt in alter_statements {
+        let _ = conn.execute(stmt, []);
+    }
+
+    log::info!("Database schema migrations applied successfully with NPCRS compliance additions.");
     Ok(())
 }

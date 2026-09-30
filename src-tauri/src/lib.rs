@@ -20,6 +20,10 @@ pub fn run() {
             commands::admin::create_department,
             commands::admin::update_department,
             commands::admin::delete_department,
+            commands::admin::list_privacy_officers,
+            commands::admin::create_privacy_officer,
+            commands::admin::update_privacy_officer,
+            commands::admin::delete_privacy_officer,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {
