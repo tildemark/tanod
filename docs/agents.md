@@ -116,8 +116,10 @@ Do not dump all files at once. Work iteratively and ask for confirmation after e
 * Phase 3: ROPA Module - SvelteKit 4-Step Wizard, Zod schemas, Rust commands, and the TanStack Table view with delete confirmations.
 * Phase 4: NPC PIA Engine - The 4x4 matrix scoring, assessment steps, and Typst PDF export Rust command.
 * Phase 5: Incident (72h Timer), DSR Kanban, and Memos.
+* Phase 6: Distribution & Landing Page (GitHub Pages).
+* Phase 7: Statutory Document Vault - Yearly compliance folder architecture (%APPDATA%/tanod/vault/{year}/), SEC/GIS/Notarized DPO forms checklist, and native Windows shell launcher.
+* Phase 8: Backup, Export & Clean Install Restoration - Standalone .tanod compressed archive engine, SHA-256 integrity manifest, WAL checkpointing, and clean PC onboarding restore wizard.
 
-### Phase 6: Distribution & Landing Page (GitHub Pages)
 
 The application will be distributed via a landing page hosted on GitHub Pages at the custom domain `tanod.sanchez.ph`.
 

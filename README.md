@@ -66,6 +66,18 @@ $$\text{Risk Rating} = \text{Impact (1–4)} \times \text{Probability (1–4)}$$
 * **Local Asset Branding:** Upload company logos stored directly on the local filesystem (`%APPDATA%`) for auto-branding all exported documents and application headers.
 * **Department Registry:** Map organizational divisions (HR, IT, Sales, Legal) to processing operations with deletion guardrails.
 
+### 7. Statutory Document Vault & Annual Archive
+
+* **Yearly Regulatory Dossiers:** Maintain archival copies of SEC General Information Sheets (GIS), Secretary's Certificates, Board Resolutions, and notarized NPCRS DPO Forms organized by compliance year (`%APPDATA%/tanod/vault/{year}/`).
+* **Compliance Checklist:** Visual audit readiness checklist highlighting missing statutory filings for the active year.
+* **Native Windows Integration:** Direct shell execution launching native PDF viewers and opening target Windows Explorer directories.
+
+### 8. Disaster Recovery & Clean Install Migration
+
+* **Portable `.tanod` Archive:** Single-click export bundling the full SQLite database, annual document vaults, and brand assets into a portable package.
+* **Zero-Data-Loss Migration:** Flawlessly restore historical ROPA records and attached compliance evidence to a clean PC install with automatic path re-anchoring.
+
+
 ---
 
 ## Architecture & Security Model
