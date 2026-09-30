@@ -12,6 +12,18 @@
 
 Unlike conventional cloud-based compliance tools that require uploading confidential corporate operations, breach records, and employee rosters to third-party SaaS servers, TANOD operates on a strict **zero-telemetry, local-first architecture**. All compliance records, incident logs, and impact assessments remain isolated inside a hardware-encrypted SQLite database on the DPO's local workstation.
 
+
+---
+
+## 📥 Download TANOD Desktop (v1.0.0)
+
+| Package | Format | Architecture | Download Link |
+| :--- | :--- | :--- | :--- |
+| **Windows Setup Installer** | `.exe` (NSIS) | Windows 64-bit | [Download tanod_1.0.0_x64-setup.exe](https://github.com/tildemark/tanod/releases/download/v1.0.0/tanod_1.0.0_x64-setup.exe) |
+| **Enterprise Installer** | `.msi` (WiX) | Windows 64-bit | [Download tanod_1.0.0_x64_en-US.msi](https://github.com/tildemark/tanod/releases/download/v1.0.0/tanod_1.0.0_x64_en-US.msi) |
+
+> View complete release notes and SHA-256 verification hashes at the [GitHub Releases Page](https://github.com/tildemark/tanod/releases/tag/v1.0.0).
+
 ---
 
 ## Key Modules

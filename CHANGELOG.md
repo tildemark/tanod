@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 TANOD v1.0.0 delivers a sovereign, privacy-by-design desktop compliance workstation tailored specifically for Data Protection Officers (DPOs), Compliance Officers for Privacy (COPs), and privacy practitioners operating under Republic Act No. 10173 (Data Privacy Act of 2012) and National Privacy Commission (NPC) circulars.
 
 ### Added
+
 - **Core Governance & Registration Engine (NPCRS):**
   - Full compliance tracking for PIC/PIP organization profiles, sectors, and DPO/COP appointments.
   - Statutory renewal countdown timers, Head of Organization sign-off tracking, and registration seal status.
@@ -57,5 +58,6 @@ TANOD v1.0.0 delivers a sovereign, privacy-by-design desktop compliance workstat
   - Replaced legacy default icons with high-resolution TANOD Philippine Shield emblems across the taskbar, window title, and favicon.
 
 ### Security & Privacy
+
 - **100% Offline Sovereignty:** Zero third-party telemetry, zero external cloud dependencies. All data resides securely in the user's local application data directory (`rusqlite` WAL mode).
 - **Cryptographic Chaining:** Sequential verification ensuring regulatory records cannot be silently pruned or modified.
