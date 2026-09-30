@@ -32,12 +32,6 @@
     { name: 'Compression Engine', version: 'zip v2.2 + sha2 0.10', role: 'Atomic Archiving & SHA-256 Manifest Verification' }
   ];
 
-  const statutoryStandards = [
-    { code: 'RA 10173', title: 'Data Privacy Act of 2012', desc: 'Core statutory framework for personal data governance in the Philippines' },
-    { code: 'NPC Circular 2022-04', title: 'Registration Framework (NPCRS)', desc: 'Mandatory DPO appointment, Head of Agency sign-off, annual renewals' },
-    { code: 'NPC Circular 16-03', title: 'Personal Data Breach Management', desc: '72-hour mandatory notification timer and Annual ASIR filing' },
-    { code: 'NPC Advisory 17-03', title: 'Privacy Impact Assessment', desc: 'Diagnostic thresholds, 5-stage data flow lifecycle, 4×4 risk matrix' }
-  ];
 
   const companionApps = [
     {
@@ -239,20 +233,7 @@
           </div>
         </div>
 
-        <!-- Statutory Standards -->
-        <div class="space-y-2">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 font-mono">
-            Philippine Statutory Authority
-          </h3>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-            {#each statutoryStandards as std}
-              <div class="p-2.5 rounded-lg border border-slate-200 bg-white">
-                <div class="font-bold font-mono text-xs text-amber-700">{std.code}</div>
-                <div class="text-[10px] text-slate-600 truncate">{std.title}</div>
-              </div>
-            {/each}
-          </div>
-        </div>
+
       </div>
 
       <!-- Modal Footer -->
