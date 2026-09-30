@@ -299,15 +299,6 @@
         <span>Import Excel</span>
       </button>
 
-      <!-- Standard Pre-filled Library -->
-      <button
-        onclick={openTemplatesModal}
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50/80 hover:bg-amber-100 text-xs font-semibold text-amber-900 transition-all cursor-pointer shadow-2xs"
-      >
-        <Sparkles class="h-3.5 w-3.5 text-amber-600" />
-        <span>Standard Templates</span>
-      </button>
-
       <!-- Export CSV -->
       <button
         onclick={exportCsv}
@@ -315,6 +306,18 @@
       >
         <Download class="h-3.5 w-3.5" />
         <span>Export CSV</span>
+      </button>
+
+      <div class="h-4 w-px bg-slate-300 mx-1 hidden sm:block"></div>
+
+      <!-- Standard Pre-filled Library -->
+      <button
+        onclick={openTemplatesModal}
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-xs font-semibold text-amber-900 transition-all cursor-pointer shadow-2xs"
+        title="Browse and batch-import pre-filled DPA-standard templates (Payroll, CCTV, Recruitment, etc.)"
+      >
+        <Sparkles class="h-3.5 w-3.5 text-amber-600" />
+        <span>Standard Templates</span>
       </button>
 
       <!-- Add Processing Activity (Wizard) -->
