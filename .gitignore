@@ -1,38 +1,37 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Dependencies
 /node_modules
 /.pnp
 .pnp.js
 
-# testing
+# SvelteKit
+/.svelte-kit
+/build
+
+# Tauri / Rust
+/src-tauri/target
+
+# Testing & Coverage
 /coverage
 
-# next.js
+# Legacy
 /.next/
 /out/
 
-# production
-/build
+# Environment files
+.env
+.env*.local
 
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# local env files
-.env*.local
-.env
+# System & OS
+.DS_Store
+*.pem
+Thumbs.db
 
-# vercel
-.vercel
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
-# uploads
-/public/uploads/
