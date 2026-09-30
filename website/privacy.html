@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - TANOD Desktop 🛡️</title>
+  <meta name="description" content="Official Privacy Policy and Data Sovereignty Statement for TANOD Desktop and tanod.sanchez.ph under Philippine Data Privacy Act of 2012 (RA 10173).">
+  <meta name="theme-color" content="#020617">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Privacy Policy - TANOD Desktop">
+  <meta property="og:description" content="Zero telemetry, zero cloud storage, complete offline sovereignty under RA 10173.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://tanod.sanchez.ph/privacy.html">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              500: '#10b981',
+              600: '#059669',
+              900: '#064e3b',
+              950: '#022c22',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950 min-h-screen flex flex-col justify-between">
+
+  <!-- Header -->
+  <header class="border-b border-slate-900/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3 group">
+        <img src="favicon.svg" alt="TANOD Shield Logo" class="h-8 w-8 transition-transform group-hover:scale-105">
+        <div>
+          <span class="text-xl font-extrabold tracking-wider text-white">TANOD</span>
+          <span class="text-[10px] ml-2 px-2 py-0.5 rounded-full font-mono font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/60 uppercase">RA 10173</span>
+        </div>
+      </a>
+
+      <div class="flex items-center gap-4 text-xs font-semibold">
+        <a href="index.html" class="text-slate-300 hover:text-emerald-400 transition-colors">
+          ← Back to Main
+        </a>
+        <a href="https://github.com/tildemark/tanod" target="_blank" rel="noopener" class="text-slate-400 hover:text-slate-200 transition-colors">
+          GitHub
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 grow">
+    <!-- Header Banner -->
+    <div class="mb-10 pb-8 border-b border-slate-800">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-800/60 text-emerald-300 text-xs font-mono mb-4">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        Zero Telemetry • Zero Cloud Storage • Local Sovereignty
+      </div>
+      <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+        Privacy Policy & Data Sovereignty Attestation
+      </h1>
+      <p class="mt-3 text-sm text-slate-400 font-mono">
+        Effective Date: October 1, 2026 • Governed by Republic Act No. 10173 (Data Privacy Act of 2012)
+      </p>
+    </div>
+
+    <!-- Executive Statement -->
+    <div class="p-6 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-slate-900 to-slate-900 border border-emerald-800/40 mb-12">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2 mb-2">
+        <span class="text-emerald-400">🛡️</span> Executive Privacy Commitment
+      </h2>
+      <p class="text-slate-300 text-sm leading-relaxed">
+        <strong>TANOD Desktop</strong> is engineered under a foundational principle: <em>"A Data Protection Officer's compliance records are privileged corporate assets that must never leave their local workstation."</em> Neither the software application nor this landing website collects, tracks, analyzes, sells, or transmits personal data or corporate compliance logs to any external server.
+      </p>
+    </div>
+
+    <!-- Document Sections -->
+    <div class="space-y-10 text-slate-300 text-sm leading-relaxed">
+      
+      <!-- 1. The Desktop Application -->
+      <section class="space-y-3">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span class="font-mono text-emerald-400 text-base">01.</span> TANOD Desktop Native Application
+        </h2>
+        <p>
+          The TANOD Windows desktop application operates entirely on an offline-first, local-first paradigm.
+        </p>
+        <ul class="list-disc pl-5 space-y-2 text-slate-300">
+          <li><strong>Local Database Isolation:</strong> All Records of Processing Activities (ROPA), Privacy Impact Assessments (PIA), incident and breach records, Data Subject Rights (DSR) logs, and statutory vault documents are written directly to a local SQLite database stored in your Windows AppData directory (<code class="bg-slate-900 text-emerald-400 px-1.5 py-0.5 rounded font-mono text-xs">%APPDATA%\tanod\tanod.db</code>).</li>
+          <li><strong>Zero Outbound Telemetry:</strong> The desktop software contains no tracking scripts, product analytics, error telemetry beacons, or crash reporters. No network requests are initiated by the application during normal compliance operations.</li>
+          <li><strong>No Cloud Sync:</strong> There is no cloud multi-tenancy, third-party backend database, or hosted synchronizer. You retain 100% legal custody and sovereignty over all data.</li>
+          <li><strong>Disaster Recovery Portability:</strong> Backups created via the Disaster Recovery module generate an encrypted, self-contained <code class="bg-slate-900 text-emerald-400 px-1.5 py-0.5 rounded font-mono text-xs">.tanod</code> file saved directly to your local file path or secure offline drive.</li>
+        </ul>
+      </section>
+
+      <!-- 2. The Landing Website -->
+      <section class="space-y-3">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span class="font-mono text-emerald-400 text-base">02.</span> Landing Page & Distribution Website (tanod.sanchez.ph)
+        </h2>
+        <p>
+          This website serves strictly as an informational portal and distribution vehicle for the open-source Windows installer binaries.
+        </p>
+        <ul class="list-disc pl-5 space-y-2 text-slate-300">
+          <li><strong>No Cookies & No Session Trackers:</strong> We do not set first-party or third-party cookies, tracking pixels, browser fingerprinting scripts, or persistent local storage identifiers.</li>
+          <li><strong>No Advertising or Profiling:</strong> We do not participate in behavioral ad networks, data brokering, or remarketing campaigns.</li>
+          <li><strong>Direct Installer Links:</strong> Download buttons on this site link directly to the compiled release assets hosted transparently on GitHub Releases. When your browser queries the GitHub API to display the latest release tag, that request is handled under GitHub's standard public API policies.</li>
+        </ul>
+      </section>
+
+      <!-- 3. Compliance with RA 10173 Principles -->
+      <section class="space-y-3">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span class="font-mono text-emerald-400 text-base">03.</span> Strict Compliance with Philippine Data Privacy Act (RA 10173)
+        </h2>
+        <p>
+          TANOD's architecture is deliberately structured to eliminate statutory liability under the General Data Privacy Principles of Republic Act No. 10173:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <h3 class="font-bold text-emerald-400 text-xs uppercase tracking-wider font-mono mb-1">Transparency</h3>
+            <p class="text-xs text-slate-300">The entire source code is open, inspectable, and auditable on GitHub under the MIT License.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <h3 class="font-bold text-emerald-400 text-xs uppercase tracking-wider font-mono mb-1">Legitimate Purpose</h3>
+            <p class="text-xs text-slate-300">Data is processed solely within your own workstation for statutory DPO duties under NPC circulars.</p>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-900 border border-slate-800">
+            <h3 class="font-bold text-emerald-400 text-xs uppercase tracking-wider font-mono mb-1">Proportionality</h3>
+            <p class="text-xs text-slate-300">Zero data collection represents the highest standard of data minimization under DPA Section 11.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Security & Cryptographic Integrity -->
+      <section class="space-y-3">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span class="font-mono text-emerald-400 text-base">04.</span> Cryptographic Integrity & Tamper Evidence
+        </h2>
+        <p>
+          All statutory system actions within TANOD Desktop are recorded in an append-only, SHA-256 hash-chained audit ledger. This guarantees that your internal regulatory records cannot be repudiated or surreptitiously altered, ensuring strict compliance with National Privacy Commission evidentiary expectations.
+        </p>
+      </section>
+
+      <!-- 5. Contact & Privacy Inquiries -->
+      <section class="space-y-3 pt-4 border-t border-slate-800">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <span class="font-mono text-emerald-400 text-base">05.</span> Developer & Maintainer Contact
+        </h2>
+        <p>
+          For security inquiries, audit verifications, or technical questions regarding TANOD's privacy architecture:
+        </p>
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div class="font-bold text-white">Alfredo Sanchez Jr</div>
+            <div class="text-xs text-slate-400">Creator & Maintainer • TANOD Compliance Workspace</div>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <a href="mailto:derf@sanchez.ph" class="px-3 py-1.5 rounded-lg bg-emerald-950 text-emerald-300 border border-emerald-800/60 hover:bg-emerald-900 transition-colors font-mono">
+              derf@sanchez.ph
+            </a>
+            <a href="https://sanchez.ph" target="_blank" rel="noopener" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors font-mono">
+              https://sanchez.ph
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-900 bg-slate-950 py-8 text-center text-xs text-slate-500">
+    <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <img src="favicon.svg" alt="TANOD Shield Logo" class="h-5 w-5">
+        <span class="font-bold text-slate-300">TANOD Local DPO Suite</span>
+        <span>•</span>
+        <span>Republic Act No. 10173</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="hover:text-emerald-400 transition-colors">Home</a>
+        <a href="privacy.html" class="text-emerald-400 font-semibold">Privacy Policy</a>
+        <a href="https://github.com/tildemark/tanod" target="_blank" rel="noopener" class="hover:text-emerald-400 transition-colors">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
