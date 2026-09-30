@@ -8,6 +8,7 @@
     type ProcessFormData
   } from '$lib/types/ropa';
   import type { Department } from '$lib/types/organization';
+  import { PRE_FILLED_TEMPLATES, type PreFilledTemplate } from '$lib/data/ropaTemplates';
   import {
     X,
     Check,
@@ -16,7 +17,8 @@
     AlertCircle,
     Info,
     Shield,
-    FolderKanban
+    FolderKanban,
+    Sparkles
   } from 'lucide-svelte';
 
   let {
@@ -46,6 +48,33 @@
   let selectedRecipients = $state<string[]>(initialData?.recipients ? [...initialData.recipients] : []);
   let retentionPeriod = $state(initialData?.retention_period || '5 years following separation / conclusion of transaction');
   let status = $state<'DRAFT' | 'REVIEW' | 'APPROVED'>(initialData?.status || 'DRAFT');
+
+  // Selected template identifier
+  let selectedTemplateId = $state<string>('');
+
+  function applyTemplate(templateId: string) {
+    if (!templateId) return;
+    const tpl = PRE_FILLED_TEMPLATES.find((t) => t.id === templateId);
+    if (!tpl) return;
+
+    title = tpl.data.title;
+    description = tpl.data.description || '';
+    selectedSubjects = [...tpl.data.data_subjects];
+    selectedCategories = [...tpl.data.data_categories];
+    selectedBasis = [...tpl.data.lawful_basis];
+    selectedRecipients = [...tpl.data.recipients];
+    retentionPeriod = tpl.data.retention_period;
+    status = tpl.data.status;
+
+    // Try to auto-match department if possible
+    const matchedDept = departments.find((d) => 
+      tpl.suggestedDepartment.toLowerCase().includes(d.name.toLowerCase()) ||
+      d.name.toLowerCase().includes(tpl.suggestedDepartment.toLowerCase().split('/')[0].trim())
+    );
+    if (matchedDept) {
+      deptId = matchedDept.id;
+    }
+  }
 
   // Custom Item inputs
   let customSubject = $state('');
@@ -236,6 +265,45 @@
       <!-- STEP 1: Process Title & Department -->
       {#if currentStep === 1}
         <div class="space-y-4">
+          <!-- Pre-filled Template Quick Pick -->
+          {#if !initialData}
+            <div class="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/80 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 text-xs font-bold text-amber-900">
+                  <Sparkles class="h-3.5 w-3.5 text-amber-600" />
+                  <span>Quick-Fill from Standard Business Template</span>
+                </div>
+                <span class="text-[10px] font-mono bg-amber-100/90 text-amber-800 px-2 py-0.5 rounded font-semibold">
+                  Saves Manual Typing
+                </span>
+              </div>
+              <p class="text-[11px] text-amber-800/90 leading-relaxed">
+                Choose a pre-filled standard enterprise process (e.g. Payroll, Recruitment, CCTV, Vendor Due Diligence) to automatically populate all 5 pillars according to Philippine NPC compliance norms.
+              </p>
+              <div class="flex items-center gap-2 pt-1">
+                <select
+                  bind:value={selectedTemplateId}
+                  onchange={() => applyTemplate(selectedTemplateId)}
+                  class="flex-1 text-xs px-3 py-1.5 rounded-lg border border-amber-300 bg-white text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-amber-500 font-medium"
+                >
+                  <option value="">-- Select a Standard Business Processing Activity --</option>
+                  {#each PRE_FILLED_TEMPLATES as tpl}
+                    <option value={tpl.id}>[{tpl.category}] {tpl.name}</option>
+                  {/each}
+                </select>
+                {#if selectedTemplateId}
+                  <button
+                    type="button"
+                    onclick={() => applyTemplate(selectedTemplateId)}
+                    class="px-2.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors shrink-0"
+                  >
+                    Re-Apply
+                  </button>
+                {/if}
+              </div>
+            </div>
+          {/if}
+
           <div>
             <label for="step1_dept" class="block text-xs font-semibold text-slate-700 mb-1">Accountable Department Division *</label>
             <select
