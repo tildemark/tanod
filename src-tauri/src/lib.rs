@@ -13,6 +13,7 @@ pub fn run() {
             conn: Mutex::new(conn),
         })
         .invoke_handler(tauri::generate_handler![
+            // Organization & Settings
             commands::admin::get_organization,
             commands::admin::update_organization,
             commands::admin::save_org_logo,
@@ -20,10 +21,17 @@ pub fn run() {
             commands::admin::create_department,
             commands::admin::update_department,
             commands::admin::delete_department,
+            // Privacy Officers
             commands::admin::list_privacy_officers,
             commands::admin::create_privacy_officer,
             commands::admin::update_privacy_officer,
             commands::admin::delete_privacy_officer,
+            // ROPA Processes
+            commands::ropa::list_processes,
+            commands::ropa::get_process_by_id,
+            commands::ropa::create_process,
+            commands::ropa::update_process,
+            commands::ropa::delete_process,
         ])
         .setup(|app| {
             if cfg!(debug_assertions) {
