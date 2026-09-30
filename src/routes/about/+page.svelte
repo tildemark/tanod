@@ -1,83 +1,152 @@
 <script lang="ts">
-	const appVersion = '0.1.0';
+	const app = {
+		name: 'TANOD Desktop',
+		version: '0.1.0',
+		releaseChannel: 'Stable Production',
+		license: 'MIT License (Open-Source Sovereign Privacy)',
+		buildDate: '2026-10-01'
+	};
+
 	const developer = {
 		name: 'Alfredo Sanchez Jr',
 		email: 'derf@sanchez.ph',
 		website: 'https://sanchez.ph',
 		github: 'https://github.com/tildemark/tanod'
 	};
+
+	const techStack = [
+		{ name: 'Tauri Framework', version: 'v2.12.0', role: 'Native OS Bridge, Memory Safety & Low Footprint' },
+		{ name: 'Rust Core Engine', version: '1.80+', role: 'Cryptographic Hashing, SQLite WAL & File I/O' },
+		{ name: 'SQLite (rusqlite)', version: '3.45 (v0.32 bundled)', role: 'Local Embedded Relational Engine with WAL' },
+		{ name: 'SvelteKit (SPA Mode)', version: 'v2.16.0 (Svelte 5)', role: 'Reactive Zero-Latency Desktop UI Layer' },
+		{ name: 'Tailwind CSS', version: 'v3.4.17', role: 'Design System & Typography Token Engine' },
+		{ name: 'Compression Engine', version: 'zip v2.2 + sha2 0.10', role: 'Atomic Archiving & SHA-256 Manifest Verification' }
+	];
+
+	const statutoryStandards = [
+		{ code: 'RA 10173', title: 'Data Privacy Act of 2012', desc: 'Core statutory framework for personal data governance in the Philippines' },
+		{ code: 'NPC Circular 2022-04', title: 'Registration Framework (NPCRS)', desc: 'Mandatory DPO appointment, Head of Agency sign-off, annual renewals' },
+		{ code: 'NPC Circular 16-03', title: 'Personal Data Breach Management', desc: '72-hour mandatory notification timer and Annual ASIR filing' },
+		{ code: 'NPC Advisory 17-03', title: 'Privacy Impact Assessment', desc: 'Diagnostic thresholds, 5-stage data flow lifecycle, 4×4 risk matrix' }
+	];
 </script>
 
 <svelte:head>
-	<title>About TANOD — Privacy-First Desktop Workspace for Philippine DPOs</title>
+	<title>About TANOD — System Architecture & Privacy Transparency</title>
 </svelte:head>
 
 <div class="max-w-4xl mx-auto space-y-8 pb-12">
-	<!-- Top Hero / App Presentation -->
-	<div class="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
-		<div class="absolute -right-10 -bottom-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
-		<div class="flex flex-col sm:flex-row items-center sm:items-start gap-8 relative z-10">
-			<!-- High-Res Shield Logo -->
-			<div class="w-36 h-36 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-2xl bg-slate-950 shrink-0 p-1.5 flex items-center justify-center">
-				<img
-					src="/images/tanod-logo.jpg"
-					alt="TANOD Official Emblem"
-					class="w-full h-full object-cover rounded-xl"
-				/>
+	<!-- Top Header: Clean, Executive Typography -->
+	<div class="border-b border-slate-800 pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+		<div>
+			<div class="flex items-center gap-2">
+				<span class="text-xs font-mono font-semibold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/40">
+					v{app.version} • {app.releaseChannel}
+				</span>
+				<span class="text-xs text-slate-500 font-mono">Build {app.buildDate}</span>
 			</div>
+			<h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight mt-1.5">
+				About TANOD
+			</h1>
+			<p class="text-sm text-slate-400 mt-1 max-w-2xl leading-relaxed">
+				Autonomous, privacy-first desktop workspace engineered for Philippine Data Protection Officers (DPOs) and Compliance Officers for Privacy (COPs).
+			</p>
+		</div>
 
-			<div class="space-y-3 text-center sm:text-left flex-1">
-				<div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-					<span class="text-xs font-mono font-bold px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800/50">
-						v{appVersion} Production Release
-					</span>
-					<span class="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-						Tauri v2 + Rust Core
-					</span>
-					<span class="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-amber-950 text-amber-300 border border-amber-800/50">
-						100% Offline & Sovereign
-					</span>
-				</div>
-
-				<h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-					TANOD Desktop
-				</h1>
-				<p class="text-base text-slate-300 font-medium">
-					Autonomous, Privacy-First Desktop Workspace for Philippine Data Protection Officers
-				</p>
-				<p class="text-xs text-slate-400 leading-relaxed max-w-xl">
-					Formulated in strict adherence to Republic Act No. 10173 (Data Privacy Act of 2012), National Privacy Commission (NPC) Circular No. 2022-04, Circular 16-03, and Advisory 17-03.
-				</p>
-			</div>
+		<div class="shrink-0 flex items-center gap-2">
+			<a
+				href={developer.github}
+				target="_blank"
+				rel="noopener"
+				class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg border border-slate-700 transition-colors inline-flex items-center gap-1.5"
+			>
+				<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+				GitHub Repository
+			</a>
 		</div>
 	</div>
 
-	<!-- Developer & Creator Card -->
-	<div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
-		<div class="flex items-center gap-2">
-			<span class="text-xs font-semibold px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800/40">
-				Lead Engineer & Architect
+	<!-- Section 1: Privacy Transparency & Zero-Telemetry Attestation -->
+	<div class="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-7 space-y-4">
+		<div class="flex items-center justify-between">
+			<div class="flex items-center gap-2">
+				<span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+				<h2 class="text-sm font-bold uppercase tracking-wider text-slate-200 font-mono">
+					Privacy Transparency Attestation
+				</h2>
+			</div>
+			<span class="text-[11px] text-emerald-400 font-mono font-semibold bg-emerald-950/80 px-2.5 py-0.5 rounded border border-emerald-800/40">
+				Verified 100% Offline
 			</span>
-			<span class="text-xs text-slate-500 font-mono">Creator Information</span>
 		</div>
 
-		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pt-2">
-			<div class="space-y-1">
-				<h2 class="text-xl font-bold text-white tracking-tight">
-					{developer.name}
-				</h2>
-				<p class="text-xs text-slate-400">
-					Developer & Solutions Architect • Philippine Privacy Engineering
+		<p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+			Under Section 11 of the Data Privacy Act of 2012, transparency and proportionality are fundamental privacy principles. TANOD operates under an unconditional <strong>Zero-Cloud, Zero-Telemetry</strong> sovereign model:
+		</p>
+
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+			<div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+				<div class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+					<span>✓ What is Collected</span>
+				</div>
+				<p class="text-[11px] text-slate-400 leading-relaxed">
+					<strong class="text-slate-200">Zero data.</strong> No telemetry, analytics, keystroke monitors, behavioral diagnostics, or usage metrics are collected or transmitted.
 				</p>
 			</div>
 
-			<div class="flex flex-wrap items-center gap-3">
+			<div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+				<div class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+					<span>✓ Where Data Resides</span>
+				</div>
+				<p class="text-[11px] text-slate-400 leading-relaxed">
+					<strong class="text-slate-200">100% Local.</strong> ROPA, PIA risk matrices, breach logs, and documents stay strictly in your local <code class="text-slate-300 font-mono text-[10px]">%APPDATA%\tanod\</code> directory.
+				</p>
+			</div>
+
+			<div class="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+				<div class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+					<span>✓ Third-Party APIs</span>
+				</div>
+				<p class="text-[11px] text-slate-400 leading-relaxed">
+					<strong class="text-slate-200">Zero Cloud APIs.</strong> No external cloud AI services, remote trackers, or SaaS relays are embedded into the runtime.
+				</p>
+			</div>
+		</div>
+
+		<div class="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-400 border-t border-slate-800/80">
+			<span>Local Database File: <code class="font-mono text-[11px] text-slate-300">%APPDATA%\tanod\tanod.db</code></span>
+			<a href="https://privacy.gov.ph/data-privacy-act/" target="_blank" rel="noopener" class="text-emerald-400 hover:underline inline-flex items-center gap-1">
+				National Privacy Commission RA 10173 Guidelines
+				<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+			</a>
+		</div>
+	</div>
+
+	<!-- Section 2: Creator & Developer Information -->
+	<div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-7 space-y-4">
+		<div class="flex items-center justify-between">
+			<h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 font-mono">
+				Lead Engineer & Developer
+			</h2>
+			<span class="text-xs text-slate-500 font-mono">Architect</span>
+		</div>
+
+		<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5 bg-slate-950/60 border border-slate-800/80 rounded-xl p-4.5">
+			<div class="space-y-0.5">
+				<div class="text-base font-bold text-white tracking-tight">
+					{developer.name}
+				</div>
+				<div class="text-xs text-slate-400">
+					Solutions Architect & Full-Stack Systems Engineer • Philippine Data Privacy Engineering
+				</div>
+			</div>
+
+			<div class="flex flex-wrap items-center gap-2.5">
 				<a
 					href="mailto:{developer.email}"
-					class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-medium border border-slate-700 transition-colors"
+					class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
 				>
-					<svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
 					</svg>
 					{developer.email}
@@ -87,70 +156,69 @@
 					href={developer.website}
 					target="_blank"
 					rel="noopener"
-					class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 hover:text-emerald-300 text-xs font-semibold border border-emerald-800/60 transition-colors"
+					class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 hover:text-emerald-300 text-xs font-semibold border border-emerald-800/60 transition-colors"
 				>
-					<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
 					</svg>
 					sanchez.ph
 				</a>
-
-				<a
-					href={developer.github}
-					target="_blank"
-					rel="noopener"
-					class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition-colors"
-				>
-					<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
-					Source Code
-				</a>
 			</div>
 		</div>
 	</div>
 
-	<!-- Core Architectural Principles -->
-	<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-		<div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
-			<div class="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">01 • Zero Cloud Sovereignty</div>
-			<p class="text-xs text-slate-300 leading-relaxed">
-				All personal data inventories, assessments, and breach logs reside solely in your local <code class="text-emerald-400 font-mono text-[11px]">%APPDATA%\tanod\tanod.db</code>. No telemetric relays, no cloud subscriptions, no external leaks.
-			</p>
+	<!-- Section 3: Technical Architecture & Versions -->
+	<div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-7 space-y-4">
+		<div class="flex items-center justify-between">
+			<h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 font-mono">
+				Technology Stack & Specifications
+			</h2>
+			<span class="text-xs text-slate-500 font-mono">Desktop Native Runtime</span>
 		</div>
 
-		<div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
-			<div class="text-xs font-mono font-bold text-teal-400 uppercase tracking-wider">02 • Philippine Statutory Engine</div>
-			<p class="text-xs text-slate-300 leading-relaxed">
-				Custom-tailored to Republic Act No. 10173, NPC Advisory 17-03 4×4 PIA risk matrix, 72-hour mandatory breach countdowns, and NPCRS notarized portal helper workflows.
-			</p>
-		</div>
-
-		<div class="p-5 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-2">
-			<div class="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider">03 • Disaster Resilience</div>
-			<p class="text-xs text-slate-300 leading-relaxed">
-				Integrated Statutory Document Vault archiving corporate proofs by year with native Windows shell execution, plus full portability to clean-installed workstations.
-			</p>
+		<div class="divide-y divide-slate-800/80 border border-slate-800/80 rounded-xl overflow-hidden bg-slate-950/50">
+			{#each techStack as tech}
+				<div class="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+					<div class="flex items-center gap-3">
+						<span class="font-bold text-slate-200 min-w-[140px]">{tech.name}</span>
+						<span class="font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded text-[11px] border border-emerald-800/40">
+							{tech.version}
+						</span>
+					</div>
+					<div class="text-slate-400 text-[11px] sm:text-right">
+						{tech.role}
+					</div>
+				</div>
+			{/each}
 		</div>
 	</div>
 
-	<!-- Brand Emblems Showcase -->
-	<div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-6 space-y-4">
-		<h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Official Brand Assets</h3>
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-			<div class="p-4 rounded-xl bg-slate-950 border border-slate-800 flex items-center gap-4">
-				<img src="/images/tanod-logo.jpg" alt="Dark Background Emblem" class="w-16 h-16 rounded-lg object-cover border border-amber-500/30" />
-				<div>
-					<div class="text-sm font-semibold text-white">Dark Shield Emblem</div>
-					<div class="text-xs text-slate-400">Primary desktop app branding & system tray</div>
-				</div>
-			</div>
-
-			<div class="p-4 rounded-xl bg-white border border-slate-300 flex items-center gap-4">
-				<img src="/images/tanod-logo-white-bg.jpg" alt="White Background Emblem" class="w-16 h-16 rounded-lg object-cover border border-slate-200" />
-				<div>
-					<div class="text-sm font-semibold text-slate-900">Pure White Shield Emblem</div>
-					<div class="text-xs text-slate-600">Print stationery, letters & board resolutions</div>
-				</div>
-			</div>
+	<!-- Section 4: Philippine Regulatory Alignment Framework -->
+	<div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 sm:p-7 space-y-4">
+		<div class="flex items-center justify-between">
+			<h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 font-mono">
+				Regulatory Alignment Matrix
+			</h2>
+			<span class="text-xs text-slate-500 font-mono">Statutory Authority</span>
 		</div>
+
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+			{#each statutoryStandards as std}
+				<div class="bg-slate-950/60 border border-slate-800/80 rounded-xl p-3.5 space-y-1">
+					<div class="flex items-center justify-between">
+						<span class="font-mono font-bold text-xs text-amber-400">{std.code}</span>
+						<span class="text-[10px] text-slate-500 font-mono">Republic of the Philippines</span>
+					</div>
+					<div class="text-xs font-semibold text-slate-200">{std.title}</div>
+					<p class="text-[11px] text-slate-400 leading-relaxed pt-0.5">{std.desc}</p>
+				</div>
+			{/each}
+		</div>
+	</div>
+
+	<!-- Footer Notice -->
+	<div class="text-center text-xs text-slate-500 space-y-1 pt-2">
+		<p>{app.name} • Version {app.version} ({app.releaseChannel})</p>
+		<p>Distributed under the {app.license}. Dedicated to Philippine privacy sovereignty and offline accountability.</p>
 	</div>
 </div>
