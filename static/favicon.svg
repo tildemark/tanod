@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Outer Shield -->
+  <path d="M50 8 L82 22 V50 C82 72 50 92 50 92 C50 92 18 72 18 50 V22 Z" 
+        fill="#0f172a" 
+        stroke="#334155" 
+        stroke-width="3" />
+  
+  <!-- Inner Shield Trim -->
+  <path d="M50 15 L76 26 V48 C76 66 50 83 50 83 C50 83 24 66 24 48 V26 Z" 
+        fill="#1e293b" 
+        stroke="#f59e0b" 
+        stroke-width="2.5" 
+        stroke-linejoin="round"/>
+
+  <!-- Keyhole / Compliance Core -->
+  <circle cx="50" cy="42" r="7.5" fill="#f59e0b" />
+  <path d="M46 44 L43 62 H57 L54 44 Z" fill="#f59e0b" />
+  
+  <!-- Regulatory Defense Circuit Rays -->
+  <path d="M50 20 V31" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+  <path d="M50 64 V75" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+  <path d="M33 36 L40 40" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+  <path d="M67 36 L60 40" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+</svg>
