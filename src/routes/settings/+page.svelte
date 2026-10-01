@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { page } from '$app/stores';
   import {
     getOrganization,
     updateOrganization,
@@ -35,19 +36,15 @@
     Check,
     FileSpreadsheet,
     Award,
-    ShieldCheck,
-    History
+    ArrowRight
   } from 'lucide-svelte';
-  import { listSystemAuditLogs, verifyAuditTrailIntegrity, type SystemAuditLog } from '$lib/api/audit';
 
   // Tabs
-  let activeTab = $state<'organization' | 'governance_team' | 'departments' | 'copypaste' | 'audit_trail'>('organization');
+  let activeTab = $state<'organization' | 'governance_team' | 'departments'>('organization');
 
   let org = $state<Organization | null>(null);
   let departments = $state<Department[]>([]);
   let privacyOfficers = $state<PrivacyOfficer[]>([]);
-  let auditLogs = $state<SystemAuditLog[]>([]);
-  let isIntegrityValid = $state<boolean | null>(null);
   let isLoading = $state(true);
   let isSavingOrg = $state(false);
   let statusMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -118,17 +115,13 @@
       const fetchedOrg = await getOrganization();
       org = fetchedOrg;
 
-      const [fetchedDepts, fetchedOfficers, fetchedLogs, isValid] = await Promise.all([
+      const [fetchedDepts, fetchedOfficers] = await Promise.all([
         listDepartments(fetchedOrg.id),
-        listPrivacyOfficers(fetchedOrg.id),
-        listSystemAuditLogs(fetchedOrg.id, 100),
-        verifyAuditTrailIntegrity()
+        listPrivacyOfficers(fetchedOrg.id)
       ]);
 
       departments = fetchedDepts;
       privacyOfficers = fetchedOfficers;
-      auditLogs = fetchedLogs;
-      isIntegrityValid = isValid;
 
       // Populate Organization & Head fields
       name = fetchedOrg.name || '';
@@ -170,12 +163,17 @@
     }
   }
 
-  onMount(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tabParam = params.get('tab');
-    if (tabParam === 'audit_trail' || tabParam === 'governance_team' || tabParam === 'departments' || tabParam === 'copypaste') {
+  // Reactively sync tab with URL param
+  $effect(() => {
+    const tabParam = $page.url.searchParams.get('tab');
+    if (tabParam === 'governance_team' || tabParam === 'departments') {
       activeTab = tabParam;
+    } else if (!tabParam) {
+      activeTab = 'organization';
     }
+  });
+
+  onMount(() => {
     loadData();
   });
 
@@ -404,10 +402,10 @@
     <div>
       <h2 class="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
         <Building2 class="h-6 w-6 text-slate-700" />
-        Governance & NPCRS Registry Setup
+        Entity & Governance Administration
       </h2>
       <p class="text-xs text-slate-500 mt-1">
-        Official credentials for the National Privacy Commission Registration System (NPC Circular No. 2022-04), Head of Organization sign-offs, and DPO/COP management.
+        Corporate entity profile, Head of Organization sign-offs, designated Data Protection Officers, and organizational divisions.
       </p>
     </div>
 
@@ -417,7 +415,7 @@
         onclick={() => (activeTab = 'organization')}
         class="px-3.5 py-1.5 rounded-md transition-all {activeTab === 'organization' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'}"
       >
-        Entity & NPCRS
+        Entity Profile
       </button>
       <button
         onclick={() => (activeTab = 'governance_team')}
@@ -430,23 +428,6 @@
         class="px-3.5 py-1.5 rounded-md transition-all {activeTab === 'departments' ? 'bg-white text-slate-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'}"
       >
         Divisions ({departments.length})
-      </button>
-      <button
-        onclick={() => (activeTab = 'copypaste')}
-        class="px-3.5 py-1.5 rounded-md transition-all {activeTab === 'copypaste' ? 'bg-amber-100 text-amber-900 shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'}"
-      >
-        📋 NPCRS Portal Helper
-      </button>
-      <button
-        onclick={async () => {
-          activeTab = 'audit_trail';
-          auditLogs = await listSystemAuditLogs(org?.id || '', 100);
-          isIntegrityValid = await verifyAuditTrailIntegrity();
-        }}
-        class="px-3.5 py-1.5 rounded-md transition-all flex items-center gap-1.5 {activeTab === 'audit_trail' ? 'bg-slate-900 text-white shadow-xs font-semibold' : 'text-slate-600 hover:text-slate-900'}"
-      >
-        <History class="h-3.5 w-3.5 text-amber-400" />
-        <span>Audit Trail ({auditLogs.length})</span>
       </button>
     </div>
   </div>
@@ -471,79 +452,34 @@
     <!-- Entity Profile & NPCRS Form -->
     <form onsubmit={(e) => { e.preventDefault(); handleSaveOrg(); }} class="space-y-6">
       
-      <!-- Section 1: Official NPC Registration Status -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-100 bg-amber-500/5 flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <Award class="h-5 w-5 text-amber-600" />
-            <div>
-              <h3 class="text-sm font-bold text-slate-900">National Privacy Commission Registration (NPCRS)</h3>
-              <p class="text-[11px] text-slate-500">Official certificate and DPS registration credentials under NPC Circular 2022-04.</p>
-            </div>
+      <!-- NPCRS Registry Dedicated Page Callout Banner -->
+      <div class="bg-gradient-to-r from-amber-50 to-amber-100/50 rounded-xl border border-amber-300/80 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
+        <div class="flex items-start gap-3.5">
+          <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <Shield class="w-5 h-5" />
           </div>
-          <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 font-semibold">
-            {hasNpcSeal ? '🛡️ NPC Seal Issued' : 'Registration Pending'}
-          </span>
-        </div>
-
-        <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div>
-            <label for="npc_reg" class="block text-xs font-semibold text-slate-700 mb-1">NPC Registration No. / Code</label>
-            <input
-              id="npc_reg"
-              type="text"
-              bind:value={npcRegistrationNumber}
-              class="w-full text-xs px-3 py-2 rounded-md border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-slate-900 bg-white font-mono"
-              placeholder="e.g. PIC-REG-2024-009182"
-            />
-          </div>
-
-          <div>
-            <label for="reg_date" class="block text-xs font-semibold text-slate-700 mb-1">Date of Registration / Issuance</label>
-            <input
-              id="reg_date"
-              type="date"
-              bind:value={registrationDate}
-              class="w-full text-xs px-3 py-2 rounded-md border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-slate-900 bg-white"
-            />
-          </div>
-
-          <div>
-            <label for="renewal_date" class="block text-xs font-semibold text-slate-700 mb-1">Annual Renewal Deadline *</label>
-            <input
-              id="renewal_date"
-              type="date"
-              bind:value={renewalDeadline}
-              class="w-full text-xs px-3 py-2 rounded-md border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-slate-900 bg-white font-semibold text-amber-900"
-            />
-          </div>
-
-          <div>
-            <label for="asir_date" class="block text-xs font-semibold text-slate-700 mb-1">Annual ASIR Due Date</label>
-            <input
-              id="asir_date"
-              type="date"
-              bind:value={asirDueDate}
-              class="w-full text-xs px-3 py-2 rounded-md border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-slate-900 bg-white"
-            />
-            <p class="text-[10px] text-slate-500 mt-1">NPC mandates March 31 submission for Annual Security Incident Reports.</p>
-          </div>
-
-          <div class="flex items-center gap-3 pt-4">
-            <input
-              id="npc_seal_checkbox"
-              type="checkbox"
-              bind:checked={hasNpcSeal}
-              class="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
-            />
-            <label for="npc_seal_checkbox" class="text-xs font-semibold text-slate-800 cursor-pointer">
-              Official NPC Seal of Registration awarded
-            </label>
+          <div class="space-y-0.5">
+            <h3 class="text-sm font-bold text-amber-950 flex items-center gap-2">
+              Official NPCRS Registry & Filing Portal
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-200/80 text-amber-900 font-semibold border border-amber-300">
+                Dedicated Module
+              </span>
+            </h3>
+            <p class="text-xs text-amber-900/80 leading-relaxed max-w-2xl">
+              NPC Registration Number, statutory deadlines, live Vault-synchronized renewal checklists, and one-click portal filing helpers are now managed in the dedicated registry workspace.
+            </p>
           </div>
         </div>
+        <a
+          href="/npc-registration"
+          class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs hover:shadow-sm transition-all shrink-0 cursor-pointer"
+        >
+          <span>Open NPCRS Registry</span>
+          <ArrowRight class="w-3.5 h-3.5" />
+        </a>
       </div>
 
-      <!-- Section 2: Statutory Head of Agency / Head of Organization -->
+      <!-- Section 1: Statutory Head of Agency / Head of Organization -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -888,202 +824,6 @@
       </div>
     </div>
 
-  {:else if activeTab === 'copypaste'}
-    <!-- NPCRS Portal Copy-Paste Helper -->
-    <div class="space-y-6">
-      <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-5 text-amber-900 text-xs space-y-2">
-        <h3 class="font-bold flex items-center gap-2 text-sm text-amber-950">
-          📋 NPCRS Portal Copy-Paste Companion
-        </h3>
-        <p>
-          The National Privacy Commission (NPC) uses the online NPCRS portal (<a href="https://npcregistration.privacy.gov.ph" target="_blank" class="underline font-semibold">npcregistration.privacy.gov.ph</a>) without a direct public REST API. Use these pre-formatted one-click copy buttons to swiftly populate each mandatory registration field.
-        </p>
-      </div>
-
-      <!-- Quick Copy Grid -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-2xs divide-y divide-slate-100 overflow-hidden">
-        
-        <!-- Row: Head of Organization -->
-        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
-          <div>
-            <p class="text-xs font-bold text-slate-900">Head of Organization / Agency Name</p>
-            <p class="text-[11px] font-mono text-slate-500">{headName || 'Not configured'}</p>
-          </div>
-          <button
-            onclick={() => copyToClipboard('head_name', headName)}
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
-          >
-            {#if copiedField === 'head_name'}
-              <Check class="h-3.5 w-3.5 text-emerald-600" />
-              <span class="text-emerald-700">Copied</span>
-            {:else}
-              <Copy class="h-3.5 w-3.5" />
-              <span>Copy</span>
-            {/if}
-          </button>
-        </div>
-
-        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
-          <div>
-            <p class="text-xs font-bold text-slate-900">Head of Organization Title / Designation</p>
-            <p class="text-[11px] font-mono text-slate-500">{headTitle || 'Not configured'}</p>
-          </div>
-          <button
-            onclick={() => copyToClipboard('head_title', headTitle)}
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
-          >
-            {#if copiedField === 'head_title'}
-              <Check class="h-3.5 w-3.5 text-emerald-600" />
-              <span class="text-emerald-700">Copied</span>
-            {:else}
-              <Copy class="h-3.5 w-3.5" />
-              <span>Copy</span>
-            {/if}
-          </button>
-        </div>
-
-        <!-- Row: Official DPO Email -->
-        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
-          <div>
-            <p class="text-xs font-bold text-slate-900">Official Position-Dedicated DPO Email</p>
-            <p class="text-[11px] font-mono text-slate-500">{dpoEmail || 'Not configured'}</p>
-          </div>
-          <button
-            onclick={() => copyToClipboard('dpo_email', dpoEmail)}
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
-          >
-            {#if copiedField === 'dpo_email'}
-              <Check class="h-3.5 w-3.5 text-emerald-600" />
-              <span class="text-emerald-700">Copied</span>
-            {:else}
-              <Copy class="h-3.5 w-3.5" />
-              <span>Copy</span>
-            {/if}
-          </button>
-        </div>
-
-        <!-- Row: TIN -->
-        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
-          <div>
-            <p class="text-xs font-bold text-slate-900">Tax Identification Number (TIN)</p>
-            <p class="text-[11px] font-mono text-slate-500">{tinNumber || 'Not configured'}</p>
-          </div>
-          <button
-            onclick={() => copyToClipboard('tin', tinNumber)}
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
-          >
-            {#if copiedField === 'tin'}
-              <Check class="h-3.5 w-3.5 text-emerald-600" />
-              <span class="text-emerald-700">Copied</span>
-            {:else}
-              <Copy class="h-3.5 w-3.5" />
-              <span>Copy</span>
-            {/if}
-          </button>
-        </div>
-
-        <!-- Row: Sector & Entity Classification -->
-        <div class="p-4 flex items-center justify-between hover:bg-slate-50">
-          <div>
-            <p class="text-xs font-bold text-slate-900">Classification & Sector</p>
-            <p class="text-[11px] font-mono text-slate-500">{entityType} — {sector || 'Private'}</p>
-          </div>
-          <button
-            onclick={() => copyToClipboard('classification', `${entityType} - ${sector}`)}
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-xs font-medium text-slate-700 transition-colors cursor-pointer"
-          >
-            {#if copiedField === 'classification'}
-              <Check class="h-3.5 w-3.5 text-emerald-600" />
-              <span class="text-emerald-700">Copied</span>
-            {:else}
-              <Copy class="h-3.5 w-3.5" />
-              <span>Copy</span>
-            {/if}
-          </button>
-        </div>
-
-      </div>
-    </div>
-  {/if}
-
-  <!-- TAB 5: IMMUTABLE TAMPER-EVIDENT AUDIT TRAIL -->
-  {#if activeTab === 'audit_trail'}
-    <div class="space-y-4">
-      <!-- Cryptographic Proof Status Banner -->
-      <div class="p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs {isIntegrityValid ? 'bg-emerald-50/80 border-emerald-300' : 'bg-rose-50/80 border-rose-300'}">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-lg flex items-center justify-center {isIntegrityValid ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}">
-            <ShieldCheck class="w-5 h-5" />
-          </div>
-          <div>
-            <h3 class="text-xs font-bold uppercase tracking-wider {isIntegrityValid ? 'text-emerald-950' : 'text-rose-950'} font-mono">
-              {isIntegrityValid ? 'Cryptographic Hash-Chain Intact & Verified' : 'Cryptographic Integrity Warning!'}
-            </h3>
-            <p class="text-xs {isIntegrityValid ? 'text-emerald-900' : 'text-rose-900'}">
-              {isIntegrityValid ? 'Every compliance action is cryptographically chained with SHA-256 hashes (RA 10173 Sec. 20 accountability).' : 'A hash mismatch was detected in the local audit log sequence.'}
-            </p>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onclick={async () => {
-            auditLogs = await listSystemAuditLogs(org?.id || '', 100);
-            isIntegrityValid = await verifyAuditTrailIntegrity();
-          }}
-          class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all cursor-pointer shadow-2xs shrink-0"
-        >
-          Re-verify Audit Trail
-        </button>
-      </div>
-
-      <!-- Audit Records Table -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
-        <div class="px-5 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono">
-            Sequential Immutable Log Registry ({auditLogs.length} Events)
-          </span>
-          <span class="text-[11px] font-mono text-slate-500">Append-Only SQLite WAL</span>
-        </div>
-
-        {#if auditLogs.length === 0}
-          <div class="p-12 text-center text-xs text-slate-400">
-            No audit events recorded yet. Actions across DSR, ROPA, Incidents, and Vault will automatically appear here.
-          </div>
-        {:else}
-          <div class="overflow-x-auto max-h-[500px] overflow-y-auto divide-y divide-slate-100">
-            {#each auditLogs as log}
-              <div class="p-4 hover:bg-slate-50/70 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-                <div class="space-y-1 flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-800 border border-slate-200">
-                      {log.action}
-                    </span>
-                    <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
-                      {log.entity_type}
-                    </span>
-                    <span class="text-[11px] text-slate-400 font-mono">
-                      {new Date(log.timestamp).toLocaleString()}
-                    </span>
-                  </div>
-                  <p class="font-bold text-slate-900 truncate">{log.summary}</p>
-                  {#if log.details && log.details !== '{}'}
-                    <p class="text-[11px] font-mono text-slate-500 bg-slate-50 p-1.5 rounded border border-slate-200/80 truncate">
-                      {log.details}
-                    </p>
-                  {/if}
-                </div>
-
-                <div class="text-right shrink-0 font-mono text-[10px] text-slate-400">
-                  <div>Hash: <span class="text-slate-600 font-bold">{log.entry_hash.slice(0, 12)}...</span></div>
-                  <div>Prev: <span>{log.prev_hash.slice(0, 12)}...</span></div>
-                </div>
-              </div>
-            {/each}
-          </div>
-        {/if}
-      </div>
-    </div>
   {/if}
 </div>
 

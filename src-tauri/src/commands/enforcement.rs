@@ -595,6 +595,12 @@ pub struct DpoMemo {
     pub target_dept_id: Option<String>,
     pub target_dept_name: Option<String>,
     pub content: String,
+    pub status: String, // 'DRAFT', 'PROPOSED', 'APPROVED', 'ARCHIVED'
+    pub policy_category: String, // 'PRIVACY_MANUAL', 'POLICY', 'DIRECTIVE_MEMO', 'PRIVACY_NOTICE', 'SOP'
+    pub version: String,
+    pub effective_date: Option<String>,
+    pub review_date: Option<String>,
+    pub approved_by: Option<String>,
     pub issued_date: String,
     pub created_at: Option<String>,
 }
@@ -607,7 +613,28 @@ pub struct CreateMemoPayload {
     pub pillar: String,
     pub target_dept_id: Option<String>,
     pub content: String,
+    pub status: Option<String>,
+    pub policy_category: Option<String>,
+    pub version: Option<String>,
+    pub effective_date: Option<String>,
+    pub review_date: Option<String>,
+    pub approved_by: Option<String>,
     pub issued_date: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateMemoPayload {
+    pub id: String,
+    pub title: String,
+    pub pillar: String,
+    pub target_dept_id: Option<String>,
+    pub content: String,
+    pub status: String,
+    pub policy_category: String,
+    pub version: String,
+    pub effective_date: Option<String>,
+    pub review_date: Option<String>,
+    pub approved_by: Option<String>,
 }
 
 #[tauri::command]
@@ -617,7 +644,12 @@ pub fn list_dpo_memos(org_id: String, state: State<'_, DbState>) -> Result<Vec<D
     let mut stmt = conn
         .prepare(
             "SELECT m.id, m.org_id, m.memo_number, m.title, m.pillar,
-                    m.target_dept_id, d.name, m.content, m.issued_date, m.created_at
+                    m.target_dept_id, d.name, m.content,
+                    COALESCE(m.status, 'APPROVED'),
+                    COALESCE(m.policy_category, 'POLICY'),
+                    COALESCE(m.version, '1.0'),
+                    m.effective_date, m.review_date, m.approved_by,
+                    m.issued_date, m.created_at
              FROM dpo_memos m
              LEFT JOIN departments d ON d.id = m.target_dept_id
              WHERE m.org_id = ?1 OR ?1 = ''
@@ -636,8 +668,14 @@ pub fn list_dpo_memos(org_id: String, state: State<'_, DbState>) -> Result<Vec<D
                 target_dept_id: row.get(5)?,
                 target_dept_name: row.get(6)?,
                 content: row.get(7)?,
-                issued_date: row.get(8)?,
-                created_at: row.get(9)?,
+                status: row.get(8)?,
+                policy_category: row.get(9)?,
+                version: row.get(10)?,
+                effective_date: row.get(11)?,
+                review_date: row.get(12)?,
+                approved_by: row.get(13)?,
+                issued_date: row.get(14)?,
+                created_at: row.get(15)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -659,11 +697,15 @@ pub fn create_dpo_memo(
     let id = Uuid::new_v4().to_string();
 
     let issued_iso = payload.issued_date.unwrap_or_else(|| Utc::now().to_rfc3339());
+    let status = payload.status.unwrap_or_else(|| "APPROVED".to_string());
+    let category = payload.policy_category.unwrap_or_else(|| "POLICY".to_string());
+    let version = payload.version.unwrap_or_else(|| "1.0".to_string());
 
     conn.execute(
         "INSERT INTO dpo_memos (
-            id, org_id, memo_number, title, pillar, target_dept_id, content, issued_date
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            id, org_id, memo_number, title, pillar, target_dept_id, content,
+            status, policy_category, version, effective_date, review_date, approved_by, issued_date
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
         params![
             id,
             payload.org_id,
@@ -672,6 +714,12 @@ pub fn create_dpo_memo(
             payload.pillar,
             payload.target_dept_id,
             payload.content,
+            status,
+            category,
+            version,
+            payload.effective_date,
+            payload.review_date,
+            payload.approved_by,
             issued_iso,
         ],
     )
@@ -692,9 +740,89 @@ pub fn create_dpo_memo(
         target_dept_id: payload.target_dept_id,
         target_dept_name: dept_name,
         content: payload.content,
+        status,
+        policy_category: category,
+        version,
+        effective_date: payload.effective_date,
+        review_date: payload.review_date,
+        approved_by: payload.approved_by,
         issued_date: issued_iso,
         created_at: None,
     })
+}
+
+#[tauri::command]
+pub fn update_dpo_memo(
+    payload: UpdateMemoPayload,
+    state: State<'_, DbState>,
+) -> Result<DpoMemo, String> {
+    let conn = state.conn.lock().map_err(|e| e.to_string())?;
+
+    conn.execute(
+        "UPDATE dpo_memos SET
+            title = ?1,
+            pillar = ?2,
+            target_dept_id = ?3,
+            content = ?4,
+            status = ?5,
+            policy_category = ?6,
+            version = ?7,
+            effective_date = ?8,
+            review_date = ?9,
+            approved_by = ?10
+         WHERE id = ?11",
+        params![
+            payload.title,
+            payload.pillar,
+            payload.target_dept_id,
+            payload.content,
+            payload.status,
+            payload.policy_category,
+            payload.version,
+            payload.effective_date,
+            payload.review_date,
+            payload.approved_by,
+            payload.id
+        ],
+    )
+    .map_err(|e| e.to_string())?;
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT m.id, m.org_id, m.memo_number, m.title, m.pillar,
+                    m.target_dept_id, d.name, m.content,
+                    COALESCE(m.status, 'APPROVED'),
+                    COALESCE(m.policy_category, 'POLICY'),
+                    COALESCE(m.version, '1.0'),
+                    m.effective_date, m.review_date, m.approved_by,
+                    m.issued_date, m.created_at
+             FROM dpo_memos m
+             LEFT JOIN departments d ON d.id = m.target_dept_id
+             WHERE m.id = ?1",
+        )
+        .map_err(|e| e.to_string())?;
+
+    stmt.query_row(params![payload.id], |row| {
+        Ok(DpoMemo {
+            id: row.get(0)?,
+            org_id: row.get(1)?,
+            memo_number: row.get(2)?,
+            title: row.get(3)?,
+            pillar: row.get(4)?,
+            target_dept_id: row.get(5)?,
+            target_dept_name: row.get(6)?,
+            content: row.get(7)?,
+            status: row.get(8)?,
+            policy_category: row.get(9)?,
+            version: row.get(10)?,
+            effective_date: row.get(11)?,
+            review_date: row.get(12)?,
+            approved_by: row.get(13)?,
+            issued_date: row.get(14)?,
+            created_at: row.get(15)?,
+        })
+    })
+    .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

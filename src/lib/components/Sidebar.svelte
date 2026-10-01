@@ -12,7 +12,8 @@
     HardDrive,
     Info,
     Archive,
-    History
+    History,
+    Users
   } from 'lucide-svelte';
 
   let currentPath = $derived($page.url.pathname);
@@ -30,14 +31,16 @@
       group: 'Regulatory Enforcement',
       items: [
         { name: '72-Hour Breach Monitor', href: '/incidents', icon: Clock },
+        { name: 'Data Sharing (DSA / PIP)', href: '/dsa', icon: Users },
         { name: 'DSR Rights Helpdesk', href: '/dsr', icon: UserCheck },
-        { name: 'DPO Directives & Memos', href: '/memos', icon: FileText },
+        { name: 'Policies & Privacy Manual', href: '/memos', icon: FileText },
       ]
     },
     {
       group: 'Statutory Archive',
       items: [
         { name: 'Document Vault', href: '/vault', icon: FolderLock },
+        { name: 'NPCRS Registry', href: '/npc-registration', icon: Shield },
         { name: 'Backup & Recovery', href: '/backup', icon: Archive },
       ]
     },
@@ -45,7 +48,7 @@
       group: 'Administration & System',
       items: [
         { name: 'Entity & Governance', href: '/settings', icon: Settings },
-        { name: 'Immutable Audit Trail', href: '/settings?tab=audit_trail', icon: History }
+        { name: 'Immutable Audit Trail', href: '/audit-trail', icon: History }
       ]
     }
   ];
@@ -121,7 +124,7 @@
         <Info class="h-4 w-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
         <span>About TANOD</span>
       </div>
-      <span class="text-[10px] font-mono text-slate-500 group-hover:text-slate-300">v0.1.0</span>
+      <span class="text-[10px] font-mono text-slate-500 group-hover:text-slate-300">v1.1.0</span>
     </button>
   </div>
 </aside>

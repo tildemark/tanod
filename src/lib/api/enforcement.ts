@@ -60,6 +60,10 @@ export async function createDpoMemo(payload: CreateMemoPayload): Promise<DpoMemo
   return await invoke<DpoMemo>('create_dpo_memo', { payload });
 }
 
+export async function updateDpoMemo(payload: import('$lib/types/enforcement').UpdateMemoPayload): Promise<DpoMemo> {
+  return await invoke<DpoMemo>('update_dpo_memo', { payload });
+}
+
 export async function deleteDpoMemo(id: string): Promise<void> {
   return await invoke<void>('delete_dpo_memo', { id });
 }

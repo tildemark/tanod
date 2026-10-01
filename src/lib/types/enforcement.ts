@@ -109,6 +109,9 @@ export interface ResolveDsrPayload {
 // 3. DPO DIRECTIVES & INSTITUTIONAL MEMOS
 // ==========================================
 
+export type PolicyStatus = 'DRAFT' | 'PROPOSED' | 'APPROVED' | 'ARCHIVED';
+export type PolicyCategory = 'PRIVACY_MANUAL' | 'POLICY' | 'DIRECTIVE_MEMO' | 'PRIVACY_NOTICE' | 'SOP';
+
 export interface DpoMemo {
   id: string;
   org_id: string;
@@ -118,6 +121,12 @@ export interface DpoMemo {
   target_dept_id?: string | null;
   target_dept_name?: string | null;
   content: string;
+  status: PolicyStatus;
+  policy_category: PolicyCategory;
+  version: string;
+  effective_date?: string | null;
+  review_date?: string | null;
+  approved_by?: string | null;
   issued_date: string;
   created_at?: string | null;
 }
@@ -129,5 +138,25 @@ export interface CreateMemoPayload {
   pillar: 'Organizational' | 'Physical' | 'Technical' | 'Incident';
   target_dept_id?: string;
   content: string;
+  status?: PolicyStatus;
+  policy_category?: PolicyCategory;
+  version?: string;
+  effective_date?: string;
+  review_date?: string;
+  approved_by?: string;
   issued_date?: string;
+}
+
+export interface UpdateMemoPayload {
+  id: string;
+  title: string;
+  pillar: 'Organizational' | 'Physical' | 'Technical' | 'Incident';
+  target_dept_id?: string;
+  content: string;
+  status: PolicyStatus;
+  policy_category: PolicyCategory;
+  version: string;
+  effective_date?: string;
+  review_date?: string;
+  approved_by?: string;
 }

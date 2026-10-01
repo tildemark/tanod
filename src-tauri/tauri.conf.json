@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "tanod",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "identifier": "ph.sanchez.tanod",
   "build": {
     "frontendDist": "../build",
@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "TANOD Desktop 🛡️ - Privacy-First Local DPO Workspace",
         "width": 1280,
         "height": 850,

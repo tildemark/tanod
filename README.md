@@ -12,17 +12,16 @@
 
 Unlike conventional cloud-based compliance tools that require uploading confidential corporate operations, breach records, and employee rosters to third-party SaaS servers, TANOD operates on a strict **zero-telemetry, local-first architecture**. All compliance records, incident logs, and impact assessments remain isolated inside a hardware-encrypted SQLite database on the DPO's local workstation.
 
-
 ---
 
-## 📥 Download TANOD Desktop (v1.0.0)
+## 📥 Download TANOD Desktop (v1.1.0)
 
 | Package | Format | Architecture | Download Link |
 | :--- | :--- | :--- | :--- |
-| **Windows Setup Installer** | `.exe` (NSIS) | Windows 64-bit | [Download tanod_1.0.0_x64-setup.exe](https://github.com/tildemark/tanod/releases/download/v1.0.0/tanod_1.0.0_x64-setup.exe) |
-| **Enterprise Installer** | `.msi` (WiX) | Windows 64-bit | [Download tanod_1.0.0_x64_en-US.msi](https://github.com/tildemark/tanod/releases/download/v1.0.0/tanod_1.0.0_x64_en-US.msi) |
+| **Windows Setup Installer** | `.exe` (NSIS) | Windows 64-bit | [Download tanod_1.1.0_x64-setup.exe](https://github.com/tildemark/tanod/releases/download/v1.1.0/tanod_1.1.0_x64-setup.exe) |
+| **Enterprise Installer** | `.msi` (WiX) | Windows 64-bit | [Download tanod_1.1.0_x64_en-US.msi](https://github.com/tildemark/tanod/releases/download/v1.1.0/tanod_1.1.0_x64_en-US.msi) |
 
-> View complete release notes and SHA-256 verification hashes at the [GitHub Releases Page](https://github.com/tildemark/tanod/releases/tag/v1.0.0).
+> View complete release notes and SHA-256 verification hashes at the [GitHub Releases Page](https://github.com/tildemark/tanod/releases/tag/v1.1.0).
 
 ---
 
@@ -42,53 +41,76 @@ Unlike conventional cloud-based compliance tools that require uploading confiden
 
 $$\text{Risk Rating} = \text{Impact (1–4)} \times \text{Probability (1–4)}$$
 
-* **1:** Negligible
-* **2–4:** Low Risk
-* **6–9:** Medium Risk
-* **10–16:** High Risk
+* **1:** Negligible · **2–4:** Low Risk · **6–9:** Medium Risk · **10–16:** High Risk
 
-* **Audit-Ready PDF Export:** Direct compilation of complete PIA dossiers into print-ready PDF reports matching official regulatory formats.
+* **Audit-Ready PDF Export:** Direct compilation of complete PIA dossiers into print-ready PDF reports.
 
 ### 3. Incident & Breach Management
 
-* **72-Hour Statutory Countdown:** Visual countdown timer that triggers immediately upon breach discovery to enforce mandatory NPC notification timelines (NPC Circular 16-03).
-* **Automated ASIR Aggregator:** Log security events year-round; TANOD automatically compiles all minor incidents and major breaches into the tabular Annual Security Incident Report (ASIR) format required by March 31.
+* **72-Hour Statutory Countdown:** Visual countdown timer enforcing mandatory NPC notification timelines (NPC Circular 16-03).
+* **Automated ASIR Aggregator:** Compile all incidents into the tabular Annual Security Incident Report (ASIR) format required by March 31.
 
 ### 4. Data Subject Rights (DSR) Helpdesk
 
-* **Kanban Workflow:** Visual drag-and-drop board (`svelte-dnd-action`) to track requests from intake to resolution:
-* Right to be Informed
-* Right to Access
-* Right to Object
-* Right to Erasure or Blocking
-* Right to Damages
-* Right to Data Portability
-
+* **Kanban Workflow:** Visual drag-and-drop board tracking requests from intake to resolution across all six statutory rights.
 * **30-Working-Day SLA Timers:** Configurable working-day countdowns with early warnings to prevent statutory default.
+* **Dual View:** Toggle between Kanban swimlane and compact tabular data grid.
 
-### 5. DPO Directives & Institutional Memos
+### 5. Data Sharing Agreements (DSA / PIP) Registry *(New in v1.1.0)*
 
-* **Policy Issuance Ledger:** Draft, serialize (e.g., `DPO-MEMO-2026-001`), and issue organizational data privacy policies.
-* **Governance Pillar Tagging:** Categorize directives under Organizational, Physical, or Technical security measures.
-* **Print-Optimized Layouts:** Native Windows printing support (`Ctrl+P`) with pre-configured formal letterhead styles.
+* **Full Agreement Lifecycle:** Track DSAs and PIP contracts from `DRAFT → ACTIVE → EXPIRING → EXPIRED → TERMINATED`.
+* **Agreement Types:** `DATA_SHARING`, `PIP_CONTRACT`, `JOINT_CONTROLLER`, `DATA_TRANSFER` (cross-border).
+* **Security Tier Tagging:** `STANDARD`, `SENSITIVE`, `CRITICAL` with mandatory safeguard documentation per party.
+* **Expiry Alerts:** 30/60-day warnings automatically surface in the Executive Dashboard action items.
 
-### 6. Organization & Governance Setup
+### 6. Policies, Privacy Manual & Directives
 
-* **14 Entity Metadata Fields:** Store organizational details, PIC/PIP registration classifications, and official DPO credentials.
-* **Local Asset Branding:** Upload company logos stored directly on the local filesystem (`%APPDATA%`) for auto-branding all exported documents and application headers.
-* **Department Registry:** Map organizational divisions (HR, IT, Sales, Legal) to processing operations with deletion guardrails.
+* **Institutional Policy Management:** Draft, review, approve, and serialize `PRIVACY_MANUAL`, `POLICY`, `DIRECTIVE_MEMO`, `PRIVACY_NOTICE`, and `SOP` documents.
+* **Three-Stage Approval Workflow:** `DRAFT → PROPOSED → APPROVED → ARCHIVED` with auto-generated serial numbers.
+* **NPC Advisory 2017-01 Compliance Banner:** Flags missing or unapproved Data Privacy Manual as Action Required.
+* **Quick-Start Templates:** Full NPC Advisory 2017-01 Privacy Manual boilerplate, Password & Lockout Policy, Public Privacy Notice.
+* **Print-Optimized Layouts:** Native Windows printing (`Ctrl+P`) with formal institutional letterhead styles.
 
-### 7. Statutory Document Vault & Annual Archive
+### 7. NPCRS Registry *(New in v1.1.0)*
 
-* **Yearly Regulatory Dossiers:** Maintain archival copies of SEC General Information Sheets (GIS), Secretary's Certificates, Board Resolutions, and notarized NPCRS DPO Forms organized by compliance year (`%APPDATA%/tanod/vault/{year}/`).
-* **Compliance Checklist:** Visual audit readiness checklist highlighting missing statutory filings for the active year.
-* **Native Windows Integration:** Direct shell execution launching native PDF viewers and opening target Windows Explorer directories.
+* **Dedicated Registration Workspace:** NPC Registration lifecycle management — separated from general governance settings.
+* **7-Document Renewal Checklist:** Live Vault-synchronized checklist tracking all mandatory filing documents.
+* **Portal Helper:** Copy-paste credential block pre-filled with org details for NPC Privacy Portal submissions.
+* **Deadline Trackers:** Renewal countdown and ASIR March 31 submission deadline monitor.
 
-### 8. Disaster Recovery & Clean Install Migration
+### 8. Organization & Governance
 
-* **Portable `.tanod` Archive:** Single-click export bundling the full SQLite database, annual document vaults, and brand assets into a portable package.
-* **Zero-Data-Loss Migration:** Flawlessly restore historical ROPA records and attached compliance evidence to a clean PC install with automatic path re-anchoring.
+* **14 Entity Metadata Fields:** Store organizational details, PIC/PIP classifications, and DPO credentials.
+* **Privacy Officer Registry:** Designate one Sole NPC-Reporting DPO and unlimited Compliance Officers for Privacy (COPs).
+* **Department Registry:** Map organizational divisions to processing operations with deletion guardrails.
+* **Local Asset Branding:** Company logos stored on local filesystem for auto-branding exported documents.
 
+### 9. Statutory Document Vault & Annual Archive
+
+* **Yearly Regulatory Dossiers:** Archive SEC GIS, Secretary's Certificates, Board Resolutions, NPC Registration Certificates, NPC Seal, and notarized NPCRS DPO Forms by compliance year (`%APPDATA%/tanod/vault/{year}/`).
+* **Native Windows Integration:** One-click file launch in default system viewers.
+
+### 10. Immutable Audit Trail *(Standalone page in v1.1.0)*
+
+* **Tamper-Evident Cryptographic Log:** Append-only SHA-256 hash-chained log across all modules — ROPA, PIA, DSR, Incidents, Vault, DSA, Policies.
+* **Real-Time Integrity Verification:** Full hash-chain re-verification on demand; mismatches surface as immediate alerts.
+* **Module & Event Filtering:** Search and filter by entity type with live event counts.
+
+### 11. Disaster Recovery & Clean Install Migration
+
+* **Portable `.tanod` Archive:** Single-click export bundling the full SQLite database, annual document vaults, and brand assets.
+* **Zero-Data-Loss Migration:** Restore to a clean PC install with automatic path re-anchoring and SHA-256 integrity verification.
+
+---
+
+## Executive Dashboard
+
+The dashboard aggregates live data from all modules:
+
+* **Compliance Score Gauge** (0–100) — deducts for open breaches, overdue DSRs, high-risk PIAs, missing renewal docs, and absent Privacy Manual.
+* **Renewal Documents Counter** — `{n}/7 Documents Ready` with progress bar and list of missing items.
+* **Action Required Feed** — open breaches, overdue DSRs, expired/expiring DSAs, missing Privacy Manual, high-risk PIAs.
+* **Regulatory Clocks** — NPCRS renewal deadline, ASIR (March 31), 72-hour breach timers.
 
 ---
 
@@ -96,7 +118,7 @@ $$\text{Risk Rating} = \text{Impact (1–4)} \times \text{Probability (1–4)}$$
 
 ```mermaid
 graph TD
-    subgraph Frontend [SvelteKit + Shadcn-Svelte]
+    subgraph Frontend ["SvelteKit SPA (adapter-static)"]
         UI[Executive Legal UI]
         Forms[Superforms + Zod Validation]
         Tables[TanStack Table Registry]
@@ -108,30 +130,30 @@ graph TD
     end
 
     subgraph Backend [Rust Core]
-        Engine[Risk Calculation & Logic]
-        PDF[Typst PDF Compiler]
+        Engine[Compliance Logic and Risk Calculation]
+        Audit[SHA-256 Audit Chain Writer]
         DBDriver[rusqlite + SQLCipher]
     end
 
-    subgraph Storage [Local Machine]
-        DB[(tanod.db - AES-256 Encrypted)]
-        Assets[%APPDATA%/tanod/assets/]
+    subgraph Storage ["Local Machine (%APPDATA%)"]
+        DB[(tanod.db AES-256 Encrypted)]
+        Assets[assets/ Logos and Brand]
+        Vault["vault/{year}/ Statutory Docs"]
     end
 
     UI --> Forms --> IPC
     Tables --> IPC
     Board --> IPC
     IPC --> Engine
+    IPC --> Audit
     IPC --> DBDriver
-    IPC --> PDF
     DBDriver <-->|Encrypted Read/Write| DB
-    PDF -->|Generate Reports| Storage
-
+    Engine -->|Audit Events| Audit
 ```
 
-* **No Cloud Overhead:** Eliminates multi-tenant risks, subscription charges, and third-party data processor agreements (DSAs).
-* **Data Sovereignty:** Compliance data lives on the user's hard drive inside `%APPDATA%\tanod\tanod.db`.
-* **Zero AI Leakage:** Replaces nondeterministic, third-party AI APIs with a transparent, rule-based 4×4 risk calculation matrix defensible before regulatory inspectors.
+* **No Cloud Overhead:** Eliminates multi-tenant risks, subscription charges, and third-party data processor agreements.
+* **Data Sovereignty:** Compliance data lives exclusively on the user's hard drive inside `%APPDATA%\tanod\tanod.db`.
+* **Zero AI Leakage:** Transparent, rule-based 4×4 risk matrix defensible before regulatory inspectors.
 
 ---
 
@@ -143,10 +165,10 @@ graph TD
 | **Backend Core** | [Rust](https://www.rust-lang.org/) | Type-safe, high-performance logic, local I/O, and IPC command handling. |
 | **Database** | [SQLite](https://www.sqlite.org/) via `rusqlite` | Serverless relational storage with SQLCipher AES-256 at-rest encryption. |
 | **Frontend Framework** | [SvelteKit](https://kit.svelte.dev/) | Client-side Single Page Application (SPA) compiled via `@sveltejs/adapter-static`. |
-| **UI Components** | [shadcn-svelte](https://shadcn-svelte.com/) | Accessible, distraction-free component library styled with Tailwind CSS (Slate theme). |
+| **UI & Icons** | [lucide-svelte](https://lucide.dev/) + Tailwind CSS v4 | Icon library and utility-first styling with Slate/Amber theme. |
 | **Data Tables** | [@tanstack/svelte-table](https://tanstack.com/table) | Virtualized, searchable data tables for compliance registers. |
-| **Validation** | [Superforms](https://superforms.rocks/) + [Zod](https://zod.dev/) | Strict client-side data validation matching Philippine legal requirements. |
-| **Document Compiler** | [Typst](https://typst.app/) (Rust crate) | Native compilation of audit-ready PDF documents without browser print engine quirks. |
+| **Validation** | [Superforms](https://superforms.rocks/) + [Zod](https://zod.dev/) | Strict client-side validation matching Philippine legal requirements. |
+| **Drag & Drop** | [svelte-dnd-action](https://github.com/isaacs/node-lru-cache) | DSR Kanban board drag-and-drop with SLA swimlanes. |
 
 ---
 
@@ -156,38 +178,53 @@ graph TD
 tanod/
 ├── src-tauri/                     # Rust desktop core
 │   ├── src/
-│   │   ├── commands/              # Tauri IPC commands (ROPA, PIA, Memos, Settings)
+│   │   ├── commands/              # Tauri IPC command handlers
+│   │   │   ├── admin.rs           # Org, Departments, Privacy Officers
+│   │   │   ├── audit.rs           # SHA-256 audit chain
+│   │   │   ├── backup.rs          # .tanod archive engine
+│   │   │   ├── dsa.rs             # Data Sharing Agreements (NEW)
+│   │   │   ├── enforcement.rs     # Incidents, DSR, Policies/Memos
+│   │   │   ├── pia.rs             # PIA engine
+│   │   │   ├── ropa.rs            # ROPA registry
+│   │   │   └── vault.rs           # Statutory document vault
 │   │   ├── db.rs                  # SQLite connection & schema migrations
-│   │   ├── pdf.rs                 # Typst document generation engine
 │   │   ├── lib.rs                 # Core runtime configuration
 │   │   └── main.rs                # App entrypoint
-│   ├── Cargo.toml                 # Rust dependencies
-│   └── tauri.conf.json            # Desktop app configuration & window permissions
+│   ├── Cargo.toml
+│   └── tauri.conf.json
 │
 ├── src/                           # SvelteKit client application
 │   ├── lib/
-│   │   ├── components/            # UI widgets & Shadcn primitives
-│   │   │   ├── ui/                # Buttons, dialogs, badges, inputs
-│   │   │   ├── ropa/              # 4-Step ROPA Wizard & TanStack Table
-│   │   │   ├── pia/               # 4x4 Risk Matrix selector & checklist
-│   │   │   └── dsr/               # Kanban column & ticket components
-│   │   ├── schemas/               # Zod validation schemas
+│   │   ├── api/                   # Tauri invoke wrappers
+│   │   │   ├── admin.ts, audit.ts, backup.ts, dsa.ts
+│   │   │   ├── enforcement.ts, pia.ts, ropa.ts, vault.ts
+│   │   ├── components/
+│   │   │   ├── Sidebar.svelte     # Persistent navigation
+│   │   │   └── AboutModal.svelte
 │   │   └── types/                 # Shared TypeScript interfaces
 │   ├── routes/
-│   │   ├── +layout.svelte         # Branded layout with sidebar
 │   │   ├── +page.svelte           # Executive dashboard
-│   │   ├── ropa/                  # Processing activities management
+│   │   ├── ropa/                  # Processing activities
 │   │   ├── pia/                   # Impact assessments
-│   │   ├── incidents/             # 72h countdown & breach records
-│   │   ├── dsr/                   # Data subject rights Kanban
-│   │   ├── memos/                 # Policy documents & print engine
-│   │   └── settings/              # 14 organization fields & department admin
+│   │   ├── incidents/             # 72h breach monitor
+│   │   ├── dsr/                   # DSR Kanban helpdesk
+│   │   ├── dsa/                   # Data Sharing Agreements (NEW)
+│   │   ├── memos/                 # Policies, Privacy Manual & Directives
+│   │   ├── npc-registration/      # NPCRS Registry (NEW)
+│   │   ├── vault/                 # Statutory document archive
+│   │   ├── audit-trail/           # Immutable audit log (NEW standalone)
+│   │   ├── backup/                # Disaster recovery
+│   │   └── settings/              # Entity & Governance
 │   └── app.html
 │
-├── legacy/                        # Archived Next.js v0.1.0-wip prototype (Reference)
+├── docs/
+│   ├── agents.md                  # AI agent build specification
+│   └── architecture.md            # Technical architecture reference
+├── website/                       # GitHub Pages landing (tanod.sanchez.ph)
+├── legacy/                        # Archived Next.js prototype (Reference)
+├── CHANGELOG.md
 ├── package.json
 └── svelte.config.js
-
 ```
 
 ---
@@ -196,44 +233,22 @@ tanod/
 
 ### Prerequisites
 
-1. **Node.js**: `v18.0.0` or higher ([Download](https://nodejs.org/))
-2. **Rust & Cargo**: Latest stable toolchain ([Install Rust](https://www.rust-lang.org/tools/install))
-3. **C++ Build Tools**: Visual Studio Build Tools with the "Desktop development with C++" workload installed.
-4. **WebView2**: Built into Windows 10 (1803+) and Windows 11.
+1. **Node.js** `v18.0.0`+ — [Download](https://nodejs.org/)
+2. **Rust & Cargo** (latest stable) — [Install Rust](https://www.rust-lang.org/tools/install)
+3. **C++ Build Tools** — Visual Studio Build Tools with "Desktop development with C++" workload.
+4. **WebView2** — Built into Windows 10 (1803+) and Windows 11.
 
-### Setup Instructions
-
-1. **Clone the Repository**
+### Setup
 
 ```bash
 git clone https://github.com/tildemark/tanod.git
 cd tanod
-
-```
-
-1. **Install Node Dependencies**
-
-```bash
 npm install
-
+npm run tauri dev        # Start development (SvelteKit + Rust hot-reload)
+npm run tauri build      # Build production .exe / .msi installer
 ```
 
-1. **Run in Desktop Development Mode**
-
-```bash
-npm run tauri dev
-
-```
-
-*This starts the SvelteKit development server and compiles the Rust binary, launching the native Windows application window.*
-4. **Build Production Executable (`.exe` / `.msi`)**
-
-```bash
-npm run tauri build
-
-```
-
-*The compiled standalone installer will be placed in `src-tauri/target/release/bundle/`.*
+*Production installer output: `src-tauri/target/release/bundle/`*
 
 ---
 
@@ -243,9 +258,12 @@ npm run tauri build
 | --- | --- | --- |
 | **Duty to Document Processing** | RA 10173, Sec. 16; IRR Sec. 21 | Full ROPA module recording the 5 Pillars of processing. |
 | **Privacy Impact Assessments** | NPC Circular 16-01 & 16-03 | Guided PIA wizard using the official 4×4 Risk Matrix (1–16 score). |
-| **Mandatory Breach Notification** | RA 10173, Sec. 20 (f); NPC Circ. 16-03 | 72-Hour visual timer and automated ASIR report generation. |
+| **Mandatory Breach Notification** | RA 10173, Sec. 20(f); NPC Circ. 16-03 | 72-Hour visual timer and automated ASIR report generation. |
 | **Data Subject Rights Exercise** | RA 10173, Chapter IV | Kanban tracking with a 30-working-day statutory resolution clock. |
-| **General Accountability Measures** | RA 10173, Sec. 21 | Versioned DPO Memos ledger for policies and governance directives. |
+| **Data Sharing & PIP Contracts** | RA 10173, Sec. 20; NPC Circ. 2022-01 | DSA/PIP registry with full lifecycle tracking and expiry alerts. |
+| **General Accountability Measures** | RA 10173, Sec. 21; NPC Adv. 2017-01 | Policy & Privacy Manual management with Draft→Approved workflow. |
+| **NPC Registration & Renewal** | NPC Circular 2022-04 | NPCRS Registry with 7-document renewal checklist and portal helper. |
+| **Organizational Accountability Log** | RA 10173, Sec. 20 | Immutable SHA-256 hash-chained audit trail across all modules. |
 
 ---
 

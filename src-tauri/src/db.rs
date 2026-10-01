@@ -241,6 +241,28 @@ fn run_migrations(conn: &Connection) -> Result<()> {
             performed_by TEXT NOT NULL DEFAULT 'Data Protection Office',
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
         );
+
+        -- 11. Data Sharing & Outsourcing Agreements (DSA / DOA Registry) (RA 10173 Sec. 14 / NPC Circ 16-02 & 2020-03)
+        CREATE TABLE IF NOT EXISTS data_sharing_agreements (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+            counterparty_name TEXT NOT NULL,
+            agreement_type TEXT NOT NULL CHECK(agreement_type IN ('DATA_SHARING', 'OUTSOURCING_PIP', 'CROSS_BORDER', 'INTER_AGENCY')),
+            description TEXT,
+            data_categories TEXT NOT NULL,         -- JSON array or semicolon-separated text
+            data_subjects TEXT,                   -- JSON array or text
+            purpose TEXT NOT NULL,
+            lawful_basis TEXT,
+            effective_date DATE NOT NULL,
+            expiration_date DATE NOT NULL,
+            auto_renew BOOLEAN NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('DRAFT', 'ACTIVE', 'EXPIRING', 'EXPIRED', 'TERMINATED')),
+            pip_compliance_certified BOOLEAN NOT NULL DEFAULT 0,
+            security_measures TEXT,
+            vault_document_id TEXT REFERENCES statutory_documents(id) ON DELETE SET NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
         "#
     )?;
 
@@ -264,6 +286,13 @@ fn run_migrations(conn: &Connection) -> Result<()> {
         "ALTER TABLE dsr_requests ADD COLUMN data_location TEXT;",
         "ALTER TABLE dsr_requests ADD COLUMN resolution_summary TEXT;",
         "ALTER TABLE dsr_requests ADD COLUMN resolved_date DATETIME;",
+        // Enhanced Policies & DPO Directives Workflow (DRAFT, PROPOSED, APPROVED, ARCHIVED)
+        "ALTER TABLE dpo_memos ADD COLUMN status TEXT NOT NULL DEFAULT 'APPROVED';",
+        "ALTER TABLE dpo_memos ADD COLUMN policy_category TEXT NOT NULL DEFAULT 'POLICY';",
+        "ALTER TABLE dpo_memos ADD COLUMN version TEXT NOT NULL DEFAULT '1.0';",
+        "ALTER TABLE dpo_memos ADD COLUMN effective_date DATE;",
+        "ALTER TABLE dpo_memos ADD COLUMN review_date DATE;",
+        "ALTER TABLE dpo_memos ADD COLUMN approved_by TEXT;",
     ];
 
     for stmt in alter_statements {

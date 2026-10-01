@@ -93,12 +93,31 @@
 	let selectedFile: File | null = null;
 	let isUploading = false;
 
+	let selectedFilterCategory: DocumentCategory | 'ALL' = 'ALL';
+
 	onMount(() => {
 		(async () => {
 			try {
 				const loadedOrg = await getOrganization();
 				org = loadedOrg;
 				await loadDocuments();
+
+				// Check query params if navigated from another page (e.g. ?category=NPC_REGISTRATION_CERT&year=2026)
+				if (typeof window !== 'undefined') {
+					const params = new URLSearchParams(window.location.search);
+					const catParam = params.get('category') as DocumentCategory | null;
+					const yearParam = params.get('year');
+					if (yearParam) {
+						const parsedYear = parseInt(yearParam, 10);
+						if (!isNaN(parsedYear)) {
+							activeYear = parsedYear;
+							uploadYear = parsedYear;
+						}
+					}
+					if (catParam && CATEGORIES.some((c) => c.value === catParam)) {
+						openUploadForCategory(catParam, activeYear);
+					}
+				}
 			} catch (err) {
 				console.error('Failed to load vault org or documents:', err);
 			} finally {
@@ -106,6 +125,21 @@
 			}
 		})();
 	});
+
+	function openUploadForCategory(category: DocumentCategory, year?: number) {
+		resetUploadForm();
+		uploadCategory = category;
+		if (year) {
+			uploadYear = year;
+			activeYear = year;
+		}
+		// Pre-populate recommended title
+		const catDef = CATEGORIES.find((c) => c.value === category);
+		if (catDef) {
+			uploadTitle = `${uploadYear} ${catDef.label}`;
+		}
+		showUploadModal = true;
+	}
 
 	async function loadDocuments() {
 		if (!org) return;
@@ -226,9 +260,13 @@
 		};
 	});
 
-	$: complianceRate = Math.round(
-		(statutoryChecklist.filter((c) => c.isCompliant).length / statutoryChecklist.length) * 100
-	);
+	$: complianceRate = statutoryChecklist.length > 0
+		? Math.round((statutoryChecklist.filter((c) => c.isCompliant).length / statutoryChecklist.length) * 100)
+		: 0;
+
+	$: displayedDocuments = selectedFilterCategory === 'ALL' 
+		? yearDocuments 
+		: yearDocuments.filter(d => d.category === selectedFilterCategory);
 </script>
 
 <svelte:head>
@@ -317,27 +355,59 @@
 			<span>NPC Circular 2022-04 Mandatory Filing Checklist for {activeYear}</span>
 			<span class="text-[11px] text-slate-500 font-normal">Audit-Ready State</span>
 		</h3>
-		<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
 			{#each statutoryChecklist as item}
-				<div class="p-3 rounded-lg border text-xs {item.isCompliant ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-500'}">
-					<div class="flex items-center justify-between mb-1">
-						<span class="font-bold {item.isCompliant ? 'text-emerald-700' : 'text-slate-500'}">{item.isCompliant ? '✓ Archived' : '○ Pending'}</span>
-						{#if item.document}
-							{@const doc = item.document}
-							<button
-								type="button"
-								on:click={() => handleOpenFile(doc.file_path)}
-								class="text-[10px] text-emerald-700 font-semibold hover:underline cursor-pointer"
-							>
-								View File
-							</button>
-						{/if}
+				<div class="p-3 rounded-lg border text-xs flex flex-col justify-between {item.isCompliant ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900' : 'bg-slate-50 border-slate-200 text-slate-500'}">
+					<div>
+						<div class="flex items-center justify-between mb-1.5">
+							<span class="font-bold {item.isCompliant ? 'text-emerald-700' : 'text-slate-500'}">{item.isCompliant ? '✓ Archived' : '○ Pending'}</span>
+							{#if item.document}
+								{@const doc = item.document}
+								<button
+									type="button"
+									on:click={() => handleOpenFile(doc.file_path)}
+									class="text-[10px] text-emerald-700 font-semibold hover:underline cursor-pointer"
+								>
+									View File
+								</button>
+							{:else}
+								<button
+									type="button"
+									on:click={() => openUploadForCategory(item.category.value, activeYear)}
+									class="text-[10px] text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 px-2 py-0.5 rounded border border-slate-300 font-semibold cursor-pointer transition-colors shadow-2xs"
+								>
+									+ Upload
+								</button>
+							{/if}
+						</div>
+						<div class="font-semibold text-slate-900 truncate" title={item.category.label}>{item.category.label}</div>
+						<div class="text-[10px] text-slate-500 mt-1 line-clamp-2">{item.category.desc}</div>
 					</div>
-					<div class="font-semibold text-slate-900 truncate">{item.category.label}</div>
-					<div class="text-[10px] text-slate-500 mt-1 line-clamp-1">{item.category.desc}</div>
 				</div>
 			{/each}
 		</div>
+	</div>
+
+	<!-- Category Filter Bar -->
+	<div class="flex items-center gap-1.5 flex-wrap">
+		<span class="text-xs font-semibold text-slate-500 mr-1">Filter:</span>
+		<button
+			type="button"
+			on:click={() => selectedFilterCategory = 'ALL'}
+			class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer {selectedFilterCategory === 'ALL' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'}"
+		>
+			All ({yearDocuments.length})
+		</button>
+		{#each CATEGORIES as cat}
+			{@const count = yearDocuments.filter(d => d.category === cat.value).length}
+			<button
+				type="button"
+				on:click={() => selectedFilterCategory = cat.value}
+				class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer {selectedFilterCategory === cat.value ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'}"
+			>
+				{cat.label} {count > 0 ? `(${count})` : ''}
+			</button>
+		{/each}
 	</div>
 
 	<!-- Documents Grid -->
@@ -346,36 +416,52 @@
 			<div class="animate-spin w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full mx-auto mb-3"></div>
 			Loading Statutory Documents...
 		</div>
-	{:else if yearDocuments.length === 0}
+	{:else if displayedDocuments.length === 0}
 		<div class="p-12 text-center text-slate-500 bg-white rounded-xl border border-slate-200 shadow-2xs">
 			<div class="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mx-auto mb-3">
 				<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
 				</svg>
 			</div>
-			<p class="font-bold text-slate-800">No Documents Uploaded for {activeYear}</p>
+			<p class="font-bold text-slate-800">No Documents Found for {activeYear}</p>
 			<p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-				Upload your SEC GIS, Secretary's Certificate, notarized NPCRS DPO application, or NPC Certificate of Registration to maintain annual audit compliance.
+				{selectedFilterCategory === 'ALL'
+					? "Upload your SEC GIS, Secretary's Certificate, notarized NPCRS DPO application, or NPC Certificate of Registration to maintain annual audit compliance."
+					: `No archived document under this filter category for ${activeYear}.`}
 			</p>
 			<button
 				type="button"
-				on:click={() => { resetUploadForm(); showUploadModal = true; }}
-				class="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs"
+				on:click={() => { 
+					if (selectedFilterCategory !== 'ALL') {
+						openUploadForCategory(selectedFilterCategory, activeYear);
+					} else {
+						resetUploadForm(); 
+						showUploadModal = true; 
+					}
+				}}
+				class="mt-4 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-xs cursor-pointer"
 			>
-				Upload {activeYear} File
+				Upload {selectedFilterCategory !== 'ALL' ? CATEGORIES.find(c => c.value === selectedFilterCategory)?.label : `${activeYear} File`}
 			</button>
 		</div>
 	{:else}
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-			{#each yearDocuments as doc (doc.id)}
+			{#each displayedDocuments as doc (doc.id)}
 				{@const cat = CATEGORIES.find(c => c.value === doc.category)}
-				<div class="bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-4.5 transition-all flex flex-col justify-between group shadow-2xs">
+				{@const isSeal = doc.category === 'NPC_SEAL_OF_REGISTRATION'}
+				{@const isCert = doc.category === 'NPC_REGISTRATION_CERT'}
+				<div class="bg-white border {isCert ? 'border-teal-300 ring-1 ring-teal-200' : isSeal ? 'border-amber-300 ring-1 ring-amber-200' : 'border-slate-200'} hover:border-slate-300 rounded-xl p-4.5 transition-all flex flex-col justify-between group shadow-2xs">
 					<div class="space-y-3">
 						<!-- Category badge & year -->
 						<div class="flex items-center justify-between gap-2">
 							{#if cat}
-								<span class="text-[10px] font-semibold px-2 py-0.5 rounded {cat.badge} border">
-									{cat.label}
+								<span class="text-[10px] font-semibold px-2 py-0.5 rounded {cat.badge} border flex items-center gap-1">
+									{#if isSeal}
+										<span>🛡️</span>
+									{:else if isCert}
+										<span>📜</span>
+									{/if}
+									<span>{cat.label}</span>
 								</span>
 							{/if}
 							<span class="text-xs text-slate-400 font-mono font-medium">
