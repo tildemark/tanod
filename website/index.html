@@ -93,7 +93,7 @@
       <div id="download" class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
         <a
           id="hero-download-exe-btn"
-          href="https://github.com/tildemark/tanod/releases/download/v1.0.0/tanod_1.0.0_x64-setup.exe"
+          href="https://github.com/tildemark/tanod/releases/download/v1.1.0/tanod_1.1.0_x64-setup.exe"
           class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm rounded-xl shadow-xl shadow-emerald-500/20 transition-all group"
         >
           <svg class="w-4 h-4 text-slate-950 group-hover:translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -104,7 +104,7 @@
 
         <a
           id="hero-download-msi-btn"
-          href="https://github.com/tildemark/tanod/releases/download/v1.0.0/tanod_1.0.0_x64_en-US.msi"
+          href="https://github.com/tildemark/tanod/releases/download/v1.1.0/tanod_1.1.0_x64_en-US.msi"
           class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-sm rounded-xl border border-slate-700 hover:border-slate-600 transition-all"
         >
           <svg class="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -114,12 +114,13 @@
         </a>
 
         <a
-          href="https://github.com/tildemark/tanod/releases/tag/v1.0.0"
+          id="release-notes-btn"
+          href="https://github.com/tildemark/tanod/releases/tag/v1.1.0"
           target="_blank"
           rel="noopener"
           class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-slate-950/60 hover:bg-slate-900 text-slate-300 hover:text-white font-medium text-sm rounded-xl border border-slate-800/80 hover:border-slate-700 transition-all"
         >
-          <span>v1.0.0 Notes</span>
+          <span id="release-notes-text">v1.1.0 Notes</span>
           <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>
@@ -281,27 +282,37 @@
     </div>
   </footer>
 
-  <!-- Dynamic GitHub Release Fetcher -->
+  <!-- Dynamic GitHub Release Fetcher — updates all download buttons to latest release -->
   <script>
     (async function initReleaseFetcher() {
       const repo = 'tildemark/tanod';
-      const defaultUrl = 'https://github.com/' + repo + '/releases';
       try {
         const response = await fetch('https://api.github.com/repos/' + repo + '/releases/latest');
         if (!response.ok) return;
         const data = await response.json();
-        const msiAsset = data.assets && data.assets.find(a => a.name.endsWith('.msi') || a.name.endsWith('.exe'));
-        if (msiAsset) {
-          const downloadUrl = msiAsset.browser_download_url;
-          const heroBtn = document.getElementById('hero-download-btn');
-          const navBtn = document.getElementById('nav-download-btn');
-          const downloadText = document.getElementById('download-text');
-          if (heroBtn) heroBtn.href = downloadUrl;
-          if (navBtn) navBtn.href = downloadUrl;
-          if (downloadText) downloadText.textContent = 'Download ' + (data.tag_name || 'v0.1.0') + ' (.msi)';
-        }
+        const tag = data.tag_name || 'v1.1.0';
+        const ver = tag.replace(/^v/, '');
+        const base = 'https://github.com/' + repo + '/releases/download/' + tag + '/tanod_' + ver;
+
+        // Update .exe button
+        const exeBtn = document.getElementById('hero-download-exe-btn');
+        const exeText = document.getElementById('download-exe-text');
+        if (exeBtn) exeBtn.href = base + '_x64-setup.exe';
+        if (exeText) exeText.textContent = 'Download ' + tag + ' Setup (.exe)';
+
+        // Update .msi button
+        const msiBtn = document.getElementById('hero-download-msi-btn');
+        const msiText = document.getElementById('download-msi-text');
+        if (msiBtn) msiBtn.href = base + '_x64_en-US.msi';
+        if (msiText) msiText.textContent = 'Download ' + tag + ' Enterprise (.msi)';
+
+        // Update release notes link
+        const notesBtn = document.getElementById('release-notes-btn');
+        const notesText = document.getElementById('release-notes-text');
+        if (notesBtn) notesBtn.href = 'https://github.com/' + repo + '/releases/tag/' + tag;
+        if (notesText) notesText.textContent = tag + ' Release Notes';
       } catch (err) {
-        console.warn('Could not fetch latest release:', err);
+        console.warn('Could not fetch latest release from GitHub API:', err);
       }
     })();
   </script>
