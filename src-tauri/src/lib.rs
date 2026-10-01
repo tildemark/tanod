@@ -55,6 +55,7 @@ pub fn run() {
             // DPO Directives & Institutional Memos
             commands::enforcement::list_dpo_memos,
             commands::enforcement::create_dpo_memo,
+            commands::enforcement::update_dpo_memo,
             commands::enforcement::delete_dpo_memo,
             // Statutory Document Vault
             commands::vault::list_statutory_documents,
@@ -62,6 +63,11 @@ pub fn run() {
             commands::vault::open_statutory_document,
             commands::vault::open_vault_folder,
             commands::vault::delete_statutory_document,
+            // Data Sharing & Outsourcing Agreements (DSA/DOA)
+            commands::dsa::list_data_sharing_agreements,
+            commands::dsa::create_data_sharing_agreement,
+            commands::dsa::update_data_sharing_agreement,
+            commands::dsa::delete_data_sharing_agreement,
             // Disaster Recovery & Clean PC Restoration
             commands::backup::export_backup_archive,
             commands::backup::inspect_backup_archive,
