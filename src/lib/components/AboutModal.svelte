@@ -1,5 +1,6 @@
 <script lang="ts">
   import { X } from 'lucide-svelte';
+  import { getVersion } from '@tauri-apps/api/app';
 
   interface Props {
     isOpen: boolean;
@@ -8,13 +9,16 @@
 
   let { isOpen, onClose }: Props = $props();
 
+  let appVersion = $state('...');
+
   const app = {
     name: 'TANOD Desktop',
-    version: '1.0.0',
     releaseChannel: 'Stable Production',
-    license: 'MIT License (Open-Source Sovereign Privacy)',
-    buildDate: '2026-10-01'
   };
+
+  $effect(() => {
+    getVersion().then(v => { appVersion = v; });
+  });
 
   const developer = {
     name: 'Alfredo Sanchez Jr',
@@ -89,7 +93,7 @@
             <div class="flex items-center gap-2">
               <h2 class="text-base font-bold text-slate-900 tracking-tight">About TANOD Desktop</h2>
               <span class="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
-                v{app.version}
+                v{appVersion}
               </span>
             </div>
             <p class="text-[11px] text-slate-500">Autonomous Sovereign Desktop Workspace for Philippine DPOs</p>

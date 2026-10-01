@@ -15,6 +15,12 @@
     History,
     Users
   } from 'lucide-svelte';
+  import { getVersion } from '@tauri-apps/api/app';
+
+  let appVersion = $state('...');
+  $effect(() => {
+    getVersion().then(v => { appVersion = v; });
+  });
 
   let currentPath = $derived($page.url.pathname);
 
@@ -124,7 +130,7 @@
         <Info class="h-4 w-4 text-slate-400 group-hover:text-amber-400 transition-colors" />
         <span>About TANOD</span>
       </div>
-      <span class="text-[10px] font-mono text-slate-500 group-hover:text-slate-300">v1.1.0</span>
+      <span class="text-[10px] font-mono text-slate-500 group-hover:text-slate-300">v{appVersion}</span>
     </button>
   </div>
 </aside>
