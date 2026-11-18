@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { safeInvoke } from './client';
 import type {
   Incident,
   CreateIncidentPayload,
@@ -11,59 +11,59 @@ import type {
 
 // Incidents & 72-Hour Breach Monitor
 export async function listIncidents(orgId: string = ''): Promise<Incident[]> {
-  return await invoke<Incident[]>('list_incidents', { orgId });
+  return await safeInvoke<Incident[]>('list_incidents', { orgId });
 }
 
 export async function createIncident(payload: CreateIncidentPayload): Promise<Incident> {
-  return await invoke<Incident>('create_incident', { payload });
+  return await safeInvoke<Incident>('create_incident', { payload });
 }
 
 export async function updateIncident(id: string, payload: UpdateIncidentPayload): Promise<void> {
-  return await invoke<void>('update_incident', { id, payload });
+  return await safeInvoke<void>('update_incident', { id, payload });
 }
 
 export async function deleteIncident(id: string): Promise<void> {
-  return await invoke<void>('delete_incident', { id });
+  return await safeInvoke<void>('delete_incident', { id });
 }
 
 // Data Subject Rights (DSR) & Kanban
 export async function listDsrRequests(orgId: string = ''): Promise<DsrRequest[]> {
-  return await invoke<DsrRequest[]>('list_dsr_requests', { orgId });
+  return await safeInvoke<DsrRequest[]>('list_dsr_requests', { orgId });
 }
 
 export async function createDsrRequest(payload: CreateDsrPayload): Promise<DsrRequest> {
-  return await invoke<DsrRequest>('create_dsr_request', { payload });
+  return await safeInvoke<DsrRequest>('create_dsr_request', { payload });
 }
 
 export async function updateDsrStatus(id: string, status: string): Promise<void> {
-  return await invoke<void>('update_dsr_status', { payload: { id, status } });
+  return await safeInvoke<void>('update_dsr_status', { payload: { id, status } });
 }
 
 export async function resolveDsrRequest(payload: import('$lib/types/enforcement').ResolveDsrPayload): Promise<void> {
-  return await invoke<void>('resolve_dsr_request', { payload });
+  return await safeInvoke<void>('resolve_dsr_request', { payload });
 }
 
 export async function listDsrActionLogs(dsrId: string): Promise<import('$lib/types/enforcement').DsrActionLog[]> {
-  return await invoke<import('$lib/types/enforcement').DsrActionLog[]>('list_dsr_action_logs', { dsrId });
+  return await safeInvoke<import('$lib/types/enforcement').DsrActionLog[]>('list_dsr_action_logs', { dsrId });
 }
 
 export async function deleteDsrRequest(id: string): Promise<void> {
-  return await invoke<void>('delete_dsr_request', { id });
+  return await safeInvoke<void>('delete_dsr_request', { id });
 }
 
 // DPO Directives & Institutional Memos
 export async function listDpoMemos(orgId: string = ''): Promise<DpoMemo[]> {
-  return await invoke<DpoMemo[]>('list_dpo_memos', { orgId });
+  return await safeInvoke<DpoMemo[]>('list_dpo_memos', { orgId });
 }
 
 export async function createDpoMemo(payload: CreateMemoPayload): Promise<DpoMemo> {
-  return await invoke<DpoMemo>('create_dpo_memo', { payload });
+  return await safeInvoke<DpoMemo>('create_dpo_memo', { payload });
 }
 
 export async function updateDpoMemo(payload: import('$lib/types/enforcement').UpdateMemoPayload): Promise<DpoMemo> {
-  return await invoke<DpoMemo>('update_dpo_memo', { payload });
+  return await safeInvoke<DpoMemo>('update_dpo_memo', { payload });
 }
 
 export async function deleteDpoMemo(id: string): Promise<void> {
-  return await invoke<void>('delete_dpo_memo', { id });
+  return await safeInvoke<void>('delete_dpo_memo', { id });
 }

@@ -1,12 +1,18 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import {
 		listStatutoryDocuments,
 		uploadStatutoryDocument,
 		openStatutoryDocument,
+		readStatutoryDocument,
+		readFileFromDisk,
 		openVaultFolder,
 		deleteStatutoryDocument
 	} from '$lib/api/vault';
+	import { getCurrentWebview } from '@tauri-apps/api/webview';
+	import type { UnlistenFn } from '@tauri-apps/api/event';
+	import DocumentViewerModal from '$lib/components/vault/DocumentViewerModal.svelte';
+	import { AlertTriangle, Sparkles } from 'lucide-svelte';
 	import { getOrganization } from '$lib/api/admin';
 	import type { StatutoryDocument, DocumentCategory, UploadDocumentPayload } from '$lib/types/vault';
 	import type { Organization } from '$lib/types/organization';
@@ -21,10 +27,24 @@
 
 	const CATEGORIES: CategoryDef[] = [
 		{
+			value: 'SEC_REGISTRATION',
+			label: 'SEC / DTI Certificate of Registration',
+			desc: 'Official Certificate of Incorporation / DTI Registration establishing the legal juridical entity',
+			badge: 'bg-blue-950 text-blue-400 border-blue-800/40',
+			requiredAnnual: false
+		},
+		{
 			value: 'NOTARIZED_DPO_FORM',
 			label: 'Notarized DPO / COP Form',
 			desc: 'Official NPCRS DPO registration application with notary seal & Head of Agency signature',
 			badge: 'bg-emerald-950 text-emerald-400 border-emerald-800/40',
+			requiredAnnual: true
+		},
+		{
+			value: 'BUSINESS_PERMIT',
+			label: "LGU Business Permit / Mayor's Permit",
+			desc: 'Current annual Mayor\'s or Business Permit issued by the local government unit',
+			badge: 'bg-amber-950 text-amber-400 border-amber-800/40',
 			requiredAnnual: true
 		},
 		{
@@ -63,6 +83,13 @@
 			requiredAnnual: true
 		},
 		{
+			value: 'OFFICIAL_RECEIPT',
+			label: 'Official Receipt / Payment Proof',
+			desc: 'Official receipt (OR) or payment transaction confirmation for NPCRS / LGU reimbursement and financial audit',
+			badge: 'bg-emerald-950 text-emerald-300 border-emerald-800/40',
+			requiredAnnual: true
+		},
+		{
 			value: 'DATA_SHARING_AGREEMENT',
 			label: 'Data Sharing Agreement (DSA)',
 			desc: 'Executed DSAs or Outsourcing Agreements with PIPs/third-party processors',
@@ -86,14 +113,36 @@
 
 	// Upload Modal
 	let showUploadModal = false;
+
+	const currentCalendarYear = new Date().getFullYear();
+
+	// Quick pill years: Next Year (planning), Current Year, and Last Year
+	$: quickYears = [currentCalendarYear + 1, currentCalendarYear, currentCalendarYear - 1];
+	$: isHistoricalActive = !quickYears.includes(activeYear);
+	$: historicalYears = availableYears.filter((y) => !quickYears.includes(y));
 	let uploadCategory: DocumentCategory = 'NOTARIZED_DPO_FORM';
 	let uploadTitle = '';
 	let uploadYear: number = new Date().getFullYear();
 	let uploadNotes = '';
 	let selectedFile: File | null = null;
 	let isUploading = false;
+	let uploadProgress = 0; // 0 - 100%
+	let uploadStatusMessage = '';
+	let isCompressing = false;
+	let isDraggingFile = false;
+	let isReadingDroppedFile = false;
+	let droppedFileName = '';
+	const NPC_MAX_FILE_BYTES = 2 * 1024 * 1024; // 2 MB NPCRS threshold
 
 	let selectedFilterCategory: DocumentCategory | 'ALL' = 'ALL';
+
+	// Inline PDF / Document Viewer state
+	let viewerOpen = false;
+	let viewerTitle = '';
+	let viewerFilePath = '';
+	let viewerDataUri = '';
+
+	let unlistenDragDrop: UnlistenFn | null = null;
 
 	onMount(() => {
 		(async () => {
@@ -101,6 +150,33 @@
 				const loadedOrg = await getOrganization();
 				org = loadedOrg;
 				await loadDocuments();
+
+				// Listen to native Tauri OS window drag and drop events
+				try {
+					const webview = getCurrentWebview();
+					unlistenDragDrop = await webview.onDragDropEvent(async (event) => {
+						if (event.payload.type === 'over' || event.payload.type === 'enter') {
+							if (showUploadModal) {
+								isDraggingFile = true;
+							}
+						} else if (event.payload.type === 'leave') {
+							isDraggingFile = false;
+						} else if (event.payload.type === 'drop') {
+							isDraggingFile = false;
+							const paths = event.payload.paths;
+							if (paths && paths.length > 0) {
+								const droppedPath = paths[0];
+								if (!showUploadModal) {
+									// If user drops file directly on the vault page, open upload modal
+									openUploadForCategory('OTHER_COMPLIANCE', activeYear);
+								}
+								await loadDroppedFilePath(droppedPath);
+							}
+						}
+					});
+				} catch (err) {
+					console.warn('Native Tauri drag-drop event listener not available:', err);
+				}
 
 				// Check query params if navigated from another page (e.g. ?category=NPC_REGISTRATION_CERT&year=2026)
 				if (typeof window !== 'undefined') {
@@ -126,6 +202,38 @@
 		})();
 	});
 
+	onDestroy(() => {
+		if (unlistenDragDrop) {
+			unlistenDragDrop();
+			unlistenDragDrop = null;
+		}
+	});
+
+	async function loadDroppedFilePath(filePath: string) {
+		const extractedName = filePath.split(/[/\\]/).pop() || 'document';
+		droppedFileName = extractedName;
+		isReadingDroppedFile = true;
+		try {
+			const loaded = await readFileFromDisk(filePath);
+			// Decode base64 into a File object so existing form logic works seamlessly
+			const byteCharacters = atob(loaded.base64_content);
+			const byteNumbers = new Array(byteCharacters.length);
+			for (let i = 0; i < byteCharacters.length; i++) {
+				byteNumbers[i] = byteCharacters.charCodeAt(i);
+			}
+			const byteArray = new Uint8Array(byteNumbers);
+			const blob = new Blob([byteArray], { type: loaded.mime_type });
+			const file = new File([blob], loaded.file_name, { type: loaded.mime_type });
+
+			processSelectedFile(file);
+		} catch (err) {
+			console.error('Failed to load dropped file:', err);
+			alert('Failed to process dropped file: ' + err);
+		} finally {
+			isReadingDroppedFile = false;
+		}
+	}
+
 	function openUploadForCategory(category: DocumentCategory, year?: number) {
 		resetUploadForm();
 		uploadCategory = category;
@@ -147,9 +255,16 @@
 			const all = await listStatutoryDocuments(org.id);
 			documents = all;
 
-			// Derive available years
+			// Derive available years:
+			// Defaults from 2020 through next year (to allow early planning),
+			// plus any years present in uploaded documents.
 			const currentYear = new Date().getFullYear();
-			const yearsSet = new Set<number>([currentYear, currentYear - 1, currentYear - 2]);
+			const minYear = 2020;
+			const maxYear = currentYear + 1;
+			const yearsSet = new Set<number>();
+			for (let y = minYear; y <= maxYear; y++) {
+				yearsSet.add(y);
+			}
 			all.forEach((d) => yearsSet.add(d.year));
 			availableYears = Array.from(yearsSet).sort((a, b) => b - a);
 		} catch (err) {
@@ -160,12 +275,74 @@
 	async function handleFileSelect(e: Event) {
 		const target = e.target as HTMLInputElement;
 		if (target.files && target.files.length > 0) {
-			selectedFile = target.files[0];
-			if (!uploadTitle) {
-				// Autofill clean title from filename
-				const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, '');
-				uploadTitle = nameWithoutExt.replace(/[-_]/g, ' ');
+			processSelectedFile(target.files[0]);
+		}
+	}
+
+	function processSelectedFile(file: File) {
+		selectedFile = file;
+		if (!uploadTitle) {
+			const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+			uploadTitle = nameWithoutExt.replace(/[-_]/g, ' ');
+		}
+	}
+
+	async function compressSelectedImage() {
+		if (!selectedFile || !selectedFile.type.startsWith('image/')) return;
+		isCompressing = true;
+		try {
+			const bitmap = await createImageBitmap(selectedFile);
+			const maxDim = 1600;
+			let { width, height } = bitmap;
+			if (width > maxDim || height > maxDim) {
+				if (width > height) {
+					height = Math.round((height * maxDim) / width);
+					width = maxDim;
+				} else {
+					width = Math.round((width * maxDim) / height);
+					height = maxDim;
+				}
 			}
+
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext('2d');
+			if (!ctx) return;
+			ctx.drawImage(bitmap, 0, 0, width, height);
+
+			const blob = await new Promise<Blob | null>((resolve) =>
+				canvas.toBlob(resolve, 'image/jpeg', 0.75)
+			);
+			if (blob && blob.size < selectedFile.size) {
+				const compressedFileName = selectedFile.name.replace(/\.[^/.]+$/, '.jpg');
+				selectedFile = new File([blob], compressedFileName, { type: 'image/jpeg' });
+			}
+		} catch (err) {
+			console.error('Image compression failed:', err);
+		} finally {
+			isCompressing = false;
+		}
+	}
+
+	function handleDragOver(e: DragEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		isDraggingFile = true;
+	}
+
+	function handleDragLeave(e: DragEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		isDraggingFile = false;
+	}
+
+	function handleFileDrop(e: DragEvent) {
+		e.preventDefault();
+		e.stopPropagation();
+		isDraggingFile = false;
+		if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+			processSelectedFile(e.dataTransfer.files[0]);
 		}
 	}
 
@@ -173,15 +350,25 @@
 		if (!selectedFile || !org || !uploadTitle.trim()) return;
 
 		isUploading = true;
+		uploadProgress = 15;
+		uploadStatusMessage = 'Reading local binary buffer...';
 		try {
+			await new Promise((r) => setTimeout(r, 60));
 			// Read file as base64
 			const arrayBuffer = await selectedFile.arrayBuffer();
+			uploadProgress = 40;
+			uploadStatusMessage = 'Encoding sovereign payload...';
+			await new Promise((r) => setTimeout(r, 60));
+
 			const bytes = new Uint8Array(arrayBuffer);
 			let binary = '';
 			for (let i = 0; i < bytes.byteLength; i++) {
 				binary += String.fromCharCode(bytes[i]);
 			}
 			const base64Content = btoa(binary);
+
+			uploadProgress = 70;
+			uploadStatusMessage = `Persisting to %APPDATA%\\tanod\\vault\\${uploadYear}...`;
 
 			const payload: UploadDocumentPayload = {
 				org_id: org.id,
@@ -195,6 +382,10 @@
 			};
 
 			const created = await uploadStatutoryDocument(payload);
+			uploadProgress = 100;
+			uploadStatusMessage = 'Document archived successfully!';
+			await new Promise((r) => setTimeout(r, 120));
+
 			documents = [created, ...documents];
 			showUploadModal = false;
 			resetUploadForm();
@@ -203,14 +394,24 @@
 			alert('Upload failed: ' + err);
 		} finally {
 			isUploading = false;
+			uploadProgress = 0;
+			uploadStatusMessage = '';
 		}
 	}
 
-	async function handleOpenFile(filePath: string) {
+	async function handleOpenFile(filePath: string, title?: string) {
 		try {
-			await openStatutoryDocument(filePath);
+			viewerTitle = title || filePath.split(/[/\\]/).pop() || 'Document';
+			viewerFilePath = filePath;
+			viewerDataUri = '';
+			viewerOpen = true;
+
+			// Read file content locally as base64 data URI
+			const dataUri = await readStatutoryDocument(filePath);
+			viewerDataUri = dataUri;
 		} catch (err) {
-			alert('Failed to launch document: ' + err);
+			console.error('Failed to view file in internal viewer, falling back to desktop app:', err);
+			await openStatutoryDocument(filePath);
 		}
 	}
 
@@ -292,7 +493,7 @@
 		<div class="flex items-center gap-3">
 			<button
 				type="button"
-				on:click={handleOpenVaultFolder}
+				onclick={handleOpenVaultFolder}
 				class="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold border border-slate-300 transition-all cursor-pointer shadow-2xs"
 				title="Open Year Folder in Windows Explorer"
 			>
@@ -304,7 +505,7 @@
 
 			<button
 				type="button"
-				on:click={() => { resetUploadForm(); showUploadModal = true; }}
+				onclick={() => { resetUploadForm(); showUploadModal = true; }}
 				class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-xs transition-all cursor-pointer"
 			>
 				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -315,19 +516,54 @@
 		</div>
 	</div>
 
-	<!-- Year Selector Tabs -->
+	<!-- Year Selector & Archive Bar -->
 	<div class="flex items-center justify-between gap-4 flex-wrap border-b border-slate-200 pb-3">
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-1.5 flex-wrap">
 			<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">Compliance Year:</span>
-			{#each availableYears as yr}
+			
+			<!-- Quick Selector: Upcoming, Current, Previous -->
+			{#each quickYears as yr}
 				<button
 					type="button"
-					on:click={() => activeYear = yr}
-					class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer {activeYear === yr ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'}"
+					onclick={() => activeYear = yr}
+					class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 {activeYear === yr ? 'bg-slate-900 text-white shadow-xs' : 'bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-50 border border-slate-200'}"
 				>
-					{yr} Archive
+					<span>{yr}</span>
+					{#if yr === currentCalendarYear}
+						<span class="text-[10px] font-medium px-1.5 py-0.2 rounded {activeYear === yr ? 'bg-emerald-500/20 text-emerald-300' : 'bg-emerald-100 text-emerald-800'}">
+							Current
+						</span>
+					{:else if yr > currentCalendarYear}
+						<span class="text-[10px] font-medium px-1.5 py-0.2 rounded {activeYear === yr ? 'bg-amber-400/20 text-amber-300' : 'bg-amber-100 text-amber-800'}">
+							Upcoming
+						</span>
+					{/if}
 				</button>
 			{/each}
+
+			<div class="h-4 w-px bg-slate-300 mx-1 hidden sm:block"></div>
+
+			<!-- Compact Archive Dropdown for Past Years (2020 through past, plus any custom years) -->
+			<div class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1 shadow-2xs">
+				<svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+				</svg>
+				<label for="archive-year-select" class="text-xs font-semibold text-slate-500">Historical Archive:</label>
+				<select
+					id="archive-year-select"
+					value={isHistoricalActive ? activeYear : ''}
+					onchange={(e) => {
+						const val = parseInt((e.target as HTMLSelectElement).value, 10);
+						if (!isNaN(val)) activeYear = val;
+					}}
+					class="text-xs font-bold bg-transparent border-0 text-slate-800 focus:outline-none cursor-pointer pr-1 {isHistoricalActive ? 'text-emerald-700 font-extrabold' : ''}"
+				>
+					<option value="" disabled selected={!isHistoricalActive}>Select Prior Year...</option>
+					{#each historicalYears as yr}
+						<option value={yr}>{yr} Compliance Archive</option>
+					{/each}
+				</select>
+			</div>
 		</div>
 
 		<!-- Annual Health Metric -->
@@ -365,7 +601,7 @@
 								{@const doc = item.document}
 								<button
 									type="button"
-									on:click={() => handleOpenFile(doc.file_path)}
+									onclick={() => handleOpenFile(doc.file_path, doc.title)}
 									class="text-[10px] text-emerald-700 font-semibold hover:underline cursor-pointer"
 								>
 									View File
@@ -373,7 +609,7 @@
 							{:else}
 								<button
 									type="button"
-									on:click={() => openUploadForCategory(item.category.value, activeYear)}
+									onclick={() => openUploadForCategory(item.category.value, activeYear)}
 									class="text-[10px] text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-100 px-2 py-0.5 rounded border border-slate-300 font-semibold cursor-pointer transition-colors shadow-2xs"
 								>
 									+ Upload
@@ -393,7 +629,7 @@
 		<span class="text-xs font-semibold text-slate-500 mr-1">Filter:</span>
 		<button
 			type="button"
-			on:click={() => selectedFilterCategory = 'ALL'}
+			onclick={() => selectedFilterCategory = 'ALL'}
 			class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer {selectedFilterCategory === 'ALL' ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'}"
 		>
 			All ({yearDocuments.length})
@@ -402,7 +638,7 @@
 			{@const count = yearDocuments.filter(d => d.category === cat.value).length}
 			<button
 				type="button"
-				on:click={() => selectedFilterCategory = cat.value}
+				onclick={() => selectedFilterCategory = cat.value}
 				class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer {selectedFilterCategory === cat.value ? 'bg-slate-800 text-white' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'}"
 			>
 				{cat.label} {count > 0 ? `(${count})` : ''}
@@ -431,7 +667,7 @@
 			</p>
 			<button
 				type="button"
-				on:click={() => { 
+				onclick={() => { 
 					if (selectedFilterCategory !== 'ALL') {
 						openUploadForCategory(selectedFilterCategory, activeYear);
 					} else {
@@ -495,19 +731,20 @@
 						<div class="flex items-center gap-2">
 							<button
 								type="button"
-								on:click={() => handleOpenFile(doc.file_path)}
+								onclick={() => handleOpenFile(doc.file_path, doc.title)}
 								class="px-3 py-1 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-400 hover:text-emerald-300 rounded-lg text-xs font-semibold border border-emerald-800/50 flex items-center gap-1.5 cursor-pointer"
-								title="Open in Windows Desktop App"
+								title="View document in TANOD PDF viewer"
 							>
 								<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
 								</svg>
-								Open File
+								View File
 							</button>
 
 							<button
 								type="button"
-								on:click={() => handleDelete(doc.id)}
+								onclick={() => handleDelete(doc.id)}
 								class="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg hover:bg-rose-950/30 transition-colors cursor-pointer"
 								aria-label="Delete document"
 								title="Delete Document"
@@ -533,14 +770,14 @@
 					<h3 class="text-lg font-bold text-slate-900">Deposit into Statutory Document Vault</h3>
 					<p class="text-xs text-slate-500">File is stored locally under %APPDATA%\tanod\vault\{uploadYear}\</p>
 				</div>
-				<button type="button" aria-label="Close dialog" on:click={() => showUploadModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+				<button type="button" aria-label="Close dialog" onclick={() => showUploadModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
 				</button>
 			</div>
 
-			<form on:submit|preventDefault={handleUpload} class="space-y-4">
+			<form onsubmit={(e) => { e.preventDefault(); handleUpload(); }} class="space-y-4">
 				<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 					<div class="sm:col-span-2">
 						<label for="vault-category" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Document Category *</label>
@@ -582,18 +819,103 @@
 				</div>
 
 				<div>
-					<label for="vault-file" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">File Attachment (PDF, JPG, PNG, DOCX) *</label>
-					<input
-						id="vault-file"
-						type="file"
-						on:change={handleFileSelect}
-						required
-						accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
-						class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs text-slate-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200 cursor-pointer"
-					/>
-					{#if selectedFile}
-						<div class="mt-1.5 text-[11px] text-emerald-700 font-mono font-medium">
-							Selected: {selectedFile.name} ({formatBytes(selectedFile.size)})
+					<label for="vault-file" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+						File Attachment (PDF, JPG, PNG, DOCX) *
+					</label>
+
+					<!-- Drag & Drop Zone -->
+					<div
+						role="region"
+						aria-label="File upload drop area"
+						ondragover={handleDragOver}
+						ondragleave={handleDragLeave}
+						ondrop={handleFileDrop}
+						class="relative border-2 border-dashed rounded-xl p-5 text-center transition-all cursor-pointer flex flex-col items-center justify-center {
+							isDraggingFile
+								? 'border-emerald-500 bg-emerald-50/70 scale-[0.99]'
+								: selectedFile
+								? 'border-emerald-400 bg-emerald-50/30'
+								: 'border-slate-300 hover:border-slate-400 bg-slate-50/60'
+						}"
+					>
+						<input
+							id="vault-file"
+							type="file"
+							onchange={handleFileSelect}
+							accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+							class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+						/>
+
+						{#if isReadingDroppedFile}
+							<div class="flex flex-col items-center gap-2 text-emerald-700 py-2">
+								<div class="animate-spin w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full"></div>
+								<div class="text-xs font-semibold">Reading dropped file: <span class="font-mono">{droppedFileName}</span>...</div>
+								<div class="w-48 bg-emerald-100 rounded-full h-1.5 overflow-hidden">
+									<div class="h-full bg-emerald-500 rounded-full animate-pulse w-full"></div>
+								</div>
+							</div>
+						{:else if selectedFile}
+							<div class="flex items-center gap-2.5 text-emerald-800">
+								<div class="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 shrink-0">
+									<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+									</svg>
+								</div>
+								<div class="text-left min-w-0">
+									<p class="text-xs font-bold truncate">{selectedFile.name}</p>
+									<p class="text-[10px] text-emerald-600 font-mono">
+										{formatBytes(selectedFile.size)}
+										{#if selectedFile.size <= NPC_MAX_FILE_BYTES}
+											<span class="text-emerald-700 font-semibold ml-1.5">✓ NPCRS Size Compliant (&lt;2 MB)</span>
+										{/if}
+										• Click or drop file to replace
+									</p>
+								</div>
+							</div>
+						{:else}
+							<div class="flex flex-col items-center gap-1.5 text-slate-500">
+								<div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 mb-0.5">
+									<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+									</svg>
+								</div>
+								<p class="text-xs font-semibold text-slate-700">
+									Drag & drop your statutory document here, or <span class="text-emerald-700 hover:underline">browse files</span>
+								</p>
+								<p class="text-[10px] text-slate-400">PDF, PNG, JPG, or DOCX (stored locally in vault)</p>
+							</div>
+						{/if}
+					</div>
+
+					<!-- NPCRS 2MB Notice & Compression Action -->
+					{#if selectedFile && selectedFile.size > NPC_MAX_FILE_BYTES}
+						<div class="mt-2.5 p-3 rounded-lg border border-amber-300 bg-amber-50/90 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
+							<div class="flex items-start gap-2 min-w-0">
+								<AlertTriangle class="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+								<div>
+									<p class="font-bold">File Exceeds NPCRS 2 MB Limit ({formatBytes(selectedFile.size)})</p>
+									<p class="text-[11px] text-amber-800 leading-snug">
+										The National Privacy Commission NPCRS registration portal rejects files larger than 2 MB. TANOD can store this file locally, but it may be rejected during portal submission.
+									</p>
+								</div>
+							</div>
+
+							{#if selectedFile.type.startsWith('image/')}
+								<button
+									type="button"
+									disabled={isCompressing}
+									onclick={compressSelectedImage}
+									class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors cursor-pointer disabled:opacity-60 shadow-2xs"
+								>
+									{#if isCompressing}
+										<div class="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full"></div>
+										<span>Compressing...</span>
+									{:else}
+										<Sparkles class="h-3.5 w-3.5" />
+										<span>Optimize to &lt;2 MB</span>
+									{/if}
+								</button>
+							{/if}
 						</div>
 					{/if}
 				</div>
@@ -609,10 +931,29 @@
 					></textarea>
 				</div>
 
+				{#if isUploading}
+					<!-- Upload Progress Bar & Status Text -->
+					<div class="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-2">
+						<div class="flex items-center justify-between text-xs">
+							<span class="font-semibold text-emerald-900 flex items-center gap-2">
+								<span class="animate-spin w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full inline-block"></span>
+								{uploadStatusMessage || 'Archiving to sovereign vault...'}
+							</span>
+							<span class="font-mono font-bold text-emerald-800">{uploadProgress}%</span>
+						</div>
+						<div class="w-full bg-emerald-100 rounded-full h-2 overflow-hidden">
+							<div
+								class="h-full bg-emerald-600 rounded-full transition-all duration-200"
+								style="width: {uploadProgress}%"
+							></div>
+						</div>
+					</div>
+				{/if}
+
 				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
 					<button
 						type="button"
-						on:click={() => showUploadModal = false}
+						onclick={() => showUploadModal = false}
 						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg"
 					>
 						Cancel
@@ -634,3 +975,12 @@
 		</div>
 	</div>
 {/if}
+
+<!-- In-App Document / PDF Viewer Modal -->
+<DocumentViewerModal
+	isOpen={viewerOpen}
+	title={viewerTitle}
+	filePath={viewerFilePath}
+	dataUri={viewerDataUri}
+	onClose={() => (viewerOpen = false)}
+/>

@@ -5,8 +5,10 @@
     updateOrganization,
     listPrivacyOfficers
   } from '$lib/api/admin';
-  import { listStatutoryDocuments, openStatutoryDocument } from '$lib/api/vault';
-  import type { StatutoryDocument } from '$lib/types/vault';
+  import { listStatutoryDocuments, openStatutoryDocument, readStatutoryDocument } from '$lib/api/vault';
+  import DocumentViewerModal from '$lib/components/vault/DocumentViewerModal.svelte';
+  import UploadDocumentModal from '$lib/components/vault/UploadDocumentModal.svelte';
+  import type { StatutoryDocument, DocumentCategory } from '$lib/types/vault';
   import { listProcesses } from '$lib/api/ropa';
   import type { Organization, PrivacyOfficer } from '$lib/types/organization';
   import {
@@ -23,7 +25,8 @@
     Clock,
     RefreshCw,
     FolderLock,
-    Save
+    Save,
+    Loader2
   } from 'lucide-svelte';
 
   let org = $state<Organization | null>(null);
@@ -34,6 +37,17 @@
   let isSaving = $state(false);
   let statusMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let copiedField = $state<string | null>(null);
+
+  // In-app Document / PDF Viewer state
+  let viewerOpen = $state(false);
+  let viewerTitle = $state('');
+  let viewerFilePath = $state('');
+  let viewerDataUri = $state('');
+
+  // In-app Upload Modal state
+  let uploadModalOpen = $state(false);
+  let uploadTargetCategory = $state<DocumentCategory>('NOTARIZED_DPO_FORM');
+  let uploadTargetYear = $state(new Date().getFullYear());
 
   // Editable NPCRS Credentials
   let npcRegistrationNumber = $state('');
@@ -120,11 +134,18 @@
     }
   }
 
-  async function handleOpenFile(filePath: string) {
+  async function handleOpenFile(filePath: string, title?: string) {
     try {
-      await openStatutoryDocument(filePath);
+      viewerTitle = title || filePath.split(/[/\\]/).pop() || 'Statutory Document';
+      viewerFilePath = filePath;
+      viewerDataUri = '';
+      viewerOpen = true;
+
+      const dataUri = await readStatutoryDocument(filePath);
+      viewerDataUri = dataUri;
     } catch (err) {
-      alert('Failed to launch document: ' + err);
+      console.error('Failed to open document in internal viewer, falling back to OS app:', err);
+      await openStatutoryDocument(filePath);
     }
   }
 
@@ -134,12 +155,13 @@
     const currentYearDocs = vaultDocuments.filter((d) => d.year === currentYear);
 
     // Document checks
-    const secDoc = vaultDocuments.find((d) => d.category === 'SEC_GIS' || d.category === 'OTHER_COMPLIANCE' && d.title.toLowerCase().includes('sec'));
+    const secDoc = vaultDocuments.find((d) => d.category === 'SEC_REGISTRATION' || (d.category === 'OTHER_COMPLIANCE' && d.title.toLowerCase().includes('sec')));
     const gisDoc = currentYearDocs.find((d) => d.category === 'SEC_GIS');
-    const bpermitDoc = currentYearDocs.find((d) => d.category === 'OTHER_COMPLIANCE' && d.title.toLowerCase().includes('permit'));
+    const bpermitDoc = currentYearDocs.find((d) => d.category === 'BUSINESS_PERMIT' || (d.category === 'OTHER_COMPLIANCE' && d.title.toLowerCase().includes('permit')));
     const secCertDoc = vaultDocuments.find((d) => d.category === 'SECRETARY_CERTIFICATE' || d.category === 'BOARD_RESOLUTION');
     const dpoFormDoc = currentYearDocs.find((d) => d.category === 'NOTARIZED_DPO_FORM');
     const asirDoc = currentYearDocs.find((d) => d.category === 'OTHER_COMPLIANCE' && d.title.toLowerCase().includes('asir'));
+    const receiptDoc = currentYearDocs.find((d) => d.category === 'OFFICIAL_RECEIPT' || (d.category === 'OTHER_COMPLIANCE' && (d.title.toLowerCase().includes('receipt') || d.title.toLowerCase().includes('fee') || d.title.toLowerCase().includes('payment'))));
     
     // NPC Certificate & Seal checks
     const npcCertDoc = currentYearDocs.find((d) => d.category === 'NPC_REGISTRATION_CERT') ||
@@ -166,7 +188,8 @@
         autoVerified: Boolean(secDoc),
         doc: secDoc,
         checked: Boolean(secDoc),
-        source: 'Document Vault'
+        source: 'Document Vault',
+        targetCategory: 'SEC_REGISTRATION' as DocumentCategory
       },
       {
         id: 'ck_gis',
@@ -175,7 +198,8 @@
         autoVerified: Boolean(gisDoc),
         doc: gisDoc,
         checked: Boolean(gisDoc),
-        source: `Document Vault (${currentYear})`
+        source: `Document Vault (${currentYear})`,
+        targetCategory: 'SEC_GIS' as DocumentCategory
       },
       {
         id: 'ck_secrep',
@@ -184,7 +208,8 @@
         autoVerified: Boolean(secCertDoc),
         doc: secCertDoc,
         checked: Boolean(secCertDoc),
-        source: 'Document Vault'
+        source: 'Document Vault',
+        targetCategory: 'SECRETARY_CERTIFICATE' as DocumentCategory
       },
       {
         id: 'ck_dpoform',
@@ -193,16 +218,18 @@
         autoVerified: Boolean(dpoFormDoc),
         doc: dpoFormDoc,
         checked: Boolean(dpoFormDoc),
-        source: `Document Vault (${currentYear})`
+        source: `Document Vault (${currentYear})`,
+        targetCategory: 'NOTARIZED_DPO_FORM' as DocumentCategory
       },
       {
         id: 'ck_bpermit',
         label: `Valid Business Permit (${currentYear})`,
-        hint: 'Current LGU Business Permit / Mayor\'s Permit (deposit in Vault under Other Compliance)',
+        hint: 'Current LGU Business Permit / Mayor\'s Permit filed in the Statutory Vault',
         autoVerified: Boolean(bpermitDoc),
         doc: bpermitDoc,
         checked: Boolean(bpermitDoc),
-        source: `Document Vault (${currentYear})`
+        source: `Document Vault (${currentYear})`,
+        targetCategory: 'BUSINESS_PERMIT'
       },
       {
         id: 'ck_npc_cert',
@@ -244,21 +271,23 @@
       },
       {
         id: 'ck_asir',
-        label: 'Annual Security Incident Report (ASIR) Archive',
-        hint: 'Proof of previous year ASIR filed via NPC DBNMS portal before March 31',
+        label: 'Annual Security Incident Report (ASIR) Proof',
+        hint: 'NPC DBNMS submission confirmation email/PDF, or certified ASIR generated from Incidents tab',
         autoVerified: Boolean(asirDoc),
         doc: asirDoc,
         checked: Boolean(asirDoc),
-        source: `Document Vault (${currentYear})`
+        source: `Document Vault (${currentYear})`,
+        targetCategory: 'OTHER_COMPLIANCE' as DocumentCategory
       },
       {
         id: 'ck_fee',
-        label: 'NPCRS Registration / Renewal Fee Prepared',
-        hint: 'Payable via Landbank, DBP, or NPCRS payment gateway upon submission validation',
-        autoVerified: false,
-        doc: null,
-        checked: Boolean(manualChecks.ck_fee),
-        source: 'Manual Verification'
+        label: 'Official Receipt / Payment Proof (Reimbursement)',
+        hint: 'Bank deposit slip, Landbank/DBP receipt, or NPCRS electronic payment confirmation for corporate reimbursement',
+        autoVerified: Boolean(receiptDoc),
+        doc: receiptDoc,
+        checked: Boolean(receiptDoc || manualChecks.ck_fee),
+        source: receiptDoc ? `Document Vault (${receiptDoc.year})` : 'Statutory Document Vault',
+        targetCategory: 'OFFICIAL_RECEIPT' as DocumentCategory
       }
     ];
   });
@@ -471,8 +500,13 @@
             disabled={isSaving}
             class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold tracking-wide transition-all shadow-xs cursor-pointer disabled:opacity-60"
           >
-            <Save class="h-3.5 w-3.5" />
-            <span>{isSaving ? 'Saving...' : 'Save NPCRS Credentials'}</span>
+            {#if isSaving}
+              <Loader2 class="h-3.5 w-3.5 animate-spin" />
+              <span>Saving NPCRS...</span>
+            {:else}
+              <Save class="h-3.5 w-3.5" />
+              <span>Save NPCRS Credentials</span>
+            {/if}
           </button>
         </div>
       </div>
@@ -493,13 +527,18 @@
           </p>
         </div>
         <div class="flex items-center gap-2">
-          <a
-            href="/vault"
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-2xs"
+          <button
+            type="button"
+            onclick={() => {
+              uploadTargetCategory = 'OTHER_COMPLIANCE';
+              uploadTargetYear = currentYear;
+              uploadModalOpen = true;
+            }}
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-xs font-semibold text-slate-700 transition-colors shadow-2xs cursor-pointer"
           >
             <FolderLock class="h-3.5 w-3.5 text-emerald-600" />
-            <span>Deposit Documents in Vault</span>
-          </a>
+            <span>Deposit Document</span>
+          </button>
           <span class="text-xs font-mono font-bold px-3 py-1 rounded-full border {
             isAllReady ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-amber-100 text-amber-800 border-amber-300'
           }">
@@ -517,13 +556,6 @@
                 <div class="mt-0.5 h-4 w-4 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
                   <Check class="h-3 w-3 stroke-[3]" />
                 </div>
-              {:else if item.id === 'ck_fee'}
-                <input
-                  id={item.id}
-                  type="checkbox"
-                  bind:checked={manualChecks.ck_fee}
-                  class="mt-0.5 h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-600 cursor-pointer"
-                />
               {:else}
                 <div class="mt-0.5 h-4 w-4 rounded-full border border-slate-300 bg-white shrink-0"></div>
               {/if}
@@ -544,18 +576,24 @@
                 {@const d = item.doc}
                 <button
                   type="button"
-                  onclick={() => handleOpenFile(d.file_path)}
+                  onclick={() => handleOpenFile(d.file_path, item.label)}
                   class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded border border-emerald-200 transition-colors cursor-pointer"
                 >
-                  View in Vault
+                  View File
                 </button>
-              {:else if !item.checked}
-                <a
-                  href={item.targetCategory ? `/vault?category=${item.targetCategory}&year=${currentYear}` : '/vault'}
-                  class="text-[11px] font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded transition-colors"
+              {:else if !item.checked && item.id !== 'ck_dpoemail'}
+                <button
+                  type="button"
+                  onclick={() => {
+                    uploadTargetCategory = (item.targetCategory || 'OTHER_COMPLIANCE') as DocumentCategory;
+                    uploadTargetYear = currentYear;
+                    uploadModalOpen = true;
+                  }}
+                  class="text-[11px] font-semibold text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded transition-colors cursor-pointer flex items-center gap-1"
                 >
+                  <FolderLock class="w-3 h-3 text-slate-500" />
                   Upload File
-                </a>
+                </button>
               {/if}
             </div>
           </div>
@@ -720,3 +758,30 @@
     </div>
   {/if}
 </div>
+
+<!-- In-App Document / PDF Viewer Modal -->
+<DocumentViewerModal
+  isOpen={viewerOpen}
+  title={viewerTitle}
+  filePath={viewerFilePath}
+  dataUri={viewerDataUri}
+  onClose={() => (viewerOpen = false)}
+/>
+
+<!-- In-App Statutory Document Upload Modal (No page reload/redirect) -->
+{#if org}
+  <UploadDocumentModal
+    isOpen={uploadModalOpen}
+    orgId={org.id}
+    initialCategory={uploadTargetCategory}
+    initialYear={uploadTargetYear}
+    onSuccess={(created) => {
+      vaultDocuments = [created, ...vaultDocuments];
+      statusMessage = {
+        type: 'success',
+        text: `Successfully archived "${created.title}" to ${created.year} Statutory Vault.`
+      };
+    }}
+    onClose={() => (uploadModalOpen = false)}
+  />
+{/if}

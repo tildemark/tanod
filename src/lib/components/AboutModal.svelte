@@ -1,6 +1,7 @@
 <script lang="ts">
   import { X } from 'lucide-svelte';
   import { getVersion } from '@tauri-apps/api/app';
+  import { isTauriApp } from '$lib/api/client';
 
   interface Props {
     isOpen: boolean;
@@ -9,7 +10,7 @@
 
   let { isOpen, onClose }: Props = $props();
 
-  let appVersion = $state('...');
+  let appVersion = $state('1.1.0');
 
   const app = {
     name: 'TANOD Desktop',
@@ -17,7 +18,11 @@
   };
 
   $effect(() => {
-    getVersion().then(v => { appVersion = v; });
+    if (isTauriApp()) {
+      getVersion().then(v => { appVersion = v; }).catch(() => { appVersion = '1.1.0'; });
+    } else {
+      appVersion = '1.1.0 (Browser Preview)';
+    }
   });
 
   const developer = {

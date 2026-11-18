@@ -4,7 +4,7 @@ The TANOD desktop application operates on a strict local-first architecture, dec
 graph TD
     subgraph Frontend ["Presentation Layer — SvelteKit (adapter-static)"]
         A[SvelteKit SPA] --> B(lucide-svelte + Tailwind CSS v4)
-        A --> C(Superforms + Zod Validation)
+        A --> C(Svelte 5 Runes + Zod Validation)
         A --> D(svelte-dnd-action Kanban)
         A --> E(TanStack Table Registry)
     end
@@ -14,14 +14,14 @@ graph TD
     end
 
     subgraph Backend ["Core Engine — Rust"]
-        G[Rust Command Handlers] --> H[Typst PDF Engine]
+        G[Rust Command Handlers] --> H[Audit-Ready Print/PDF Exporter]
         G --> I[SHA-256 Audit Chain Writer]
         G --> J[SQL Query Builder]
         G --> K[Native Windows APIs]
     end
 
     subgraph Storage ["Local Environment — Windows %APPDATA%"]
-        L[(tanod.db — SQLite + SQLCipher AES-256)]
+        L[(tanod.db — SQLite Embedded Relational Engine)]
         M[vault/{year}/ — Statutory Documents]
         N[assets/ — Logos & Brand]
         O[Exported PDF Reports]
@@ -29,7 +29,7 @@ graph TD
 
     Frontend <-->|JSON Payloads| Bridge
     Bridge <--> Backend
-    J <-->|AES-256 Encrypted Read/Write| L
+    J <-->|Local Read/Write| L
     H -->|File System Write| O
     K -->|Shell Launch| M
 ```
@@ -40,10 +40,10 @@ graph TD
 | --- | --- | --- |
 | **Frontend Framework** | SvelteKit (`adapter-static`) | Compiles to a lightweight SPA running inside native Windows Edge WebView2. |
 | **UI System** | lucide-svelte + Tailwind CSS v4 | Accessible icon components with Slate/Amber professional theme. |
-| **Form Handling** | Sveltekit-Superforms + Zod | Manages complex, deeply nested state for ROPA and PIA documentation with strict type validation. |
+| **Form Handling** | Svelte 5 Runes + Zod | Manages complex, deeply nested state for ROPA and PIA documentation with strict type validation. |
 | **Backend Binary** | Tauri v2 (Rust) | Executes heavy computational logic, OS notifications, and file system operations outside the browser sandbox. |
-| **Database** | `rusqlite` + SQLCipher | Stores all DPO records in a locally encrypted, zero-configuration relational database file (`%APPDATA%`). |
-| **Document Generation** | `typst` (Rust Crate) | Compiles templates into precise, print-ready PDFs (PIAs, ASIRs, Memos) natively. |
+| **Database** | `rusqlite` | Stores all DPO records in a local, zero-configuration embedded relational database file (`%APPDATA%`) with WAL mode. |
+| **Document Generation** | Print-to-PDF Engine | Compiles regulatory templates into precise, signable A4/Letter PDFs (PIAs, ASIRs, Memos) with official NPC letterheads. |
 
 ## Core Module & Feature Inventory
 
@@ -68,7 +68,7 @@ graph TD
 ### 4. Security & Auditability
 
 * **Immutable Audit Trail:** A standalone page backed by an append-only `system_audit_logs` table. Each entry is SHA-256 hash-chained to the previous record. Supports module filtering, full-text search, and real-time integrity re-verification.
-* **Cryptographic Sovereignty:** Complete data isolation utilizing AES-256 encryption at rest, ensuring that a compromised physical device does not constitute a data breach.
+* **Data Sovereignty:** Complete data isolation strictly on the local workstation inside `%APPDATA%\tanod\`, guaranteeing zero external cloud telemetry or third-party exposure.
 * **Disaster Recovery:** One-click `.tanod` archive bundling the SQLite database, vault documents, and assets with SHA-256 manifest verification.
 
 ## SQLite Schema Overview

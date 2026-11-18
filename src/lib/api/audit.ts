@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { safeInvoke } from './client';
 
 export interface SystemAuditLog {
   id: string;
@@ -14,9 +14,9 @@ export interface SystemAuditLog {
 }
 
 export async function listSystemAuditLogs(orgId: string = '', limit: number = 100): Promise<SystemAuditLog[]> {
-  return await invoke<SystemAuditLog[]>('list_system_audit_logs', { orgId, limit });
+  return await safeInvoke<SystemAuditLog[]>('list_system_audit_logs', { orgId, limit });
 }
 
 export async function verifyAuditTrailIntegrity(): Promise<boolean> {
-  return await invoke<boolean>('verify_audit_trail_integrity');
+  return await safeInvoke<boolean>('verify_audit_trail_integrity');
 }

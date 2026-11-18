@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { getOrganization } from '$lib/api/admin';
-  import { listStatutoryDocuments, openStatutoryDocument } from '$lib/api/vault';
+  import { listStatutoryDocuments, openStatutoryDocument, readStatutoryDocument } from '$lib/api/vault';
+  import DocumentViewerModal from '$lib/components/vault/DocumentViewerModal.svelte';
   import {
     listDataSharingAgreements,
     createDataSharingAgreement,
@@ -14,7 +15,7 @@
   import {
     Users, Plus, Search, Calendar, FileText, CheckCircle2,
     AlertCircle, Clock, Trash2, Edit3, ArrowUpRight, ShieldCheck,
-    Check, X, ExternalLink, Filter, FolderLock
+    Check, X, ExternalLink, Filter, FolderLock, Loader2
   } from 'lucide-svelte';
 
   let org = $state<Organization | null>(null);
@@ -32,6 +33,12 @@
   let isModalOpen = $state(false);
   let editingDsa = $state<DataSharingAgreement | null>(null);
   let isSaving = $state(false);
+
+  // In-app Document Viewer state
+  let viewerOpen = $state(false);
+  let viewerTitle = $state('');
+  let viewerFilePath = $state('');
+  let viewerDataUri = $state('');
 
   // Form state
   let formCounterparty = $state('');
@@ -210,11 +217,18 @@
     }
   }
 
-  async function handleOpenVaultDoc(filePath: string) {
+  async function handleOpenVaultDoc(filePath: string, title?: string) {
     try {
-      await openStatutoryDocument(filePath);
+      viewerTitle = title || filePath.split(/[/\\]/).pop() || 'Executed Agreement';
+      viewerFilePath = filePath;
+      viewerDataUri = '';
+      viewerOpen = true;
+
+      const dataUri = await readStatutoryDocument(filePath);
+      viewerDataUri = dataUri;
     } catch (e: any) {
-      alert('Failed to open document: ' + e);
+      console.error('Failed to open document in internal viewer, falling back to OS app:', e);
+      await openStatutoryDocument(filePath);
     }
   }
 
@@ -445,7 +459,7 @@
                   {#if dsa.vault_document_file_path}
                     <button
                       type="button"
-                      onclick={() => handleOpenVaultDoc(dsa.vault_document_file_path!)}
+                      onclick={() => handleOpenVaultDoc(dsa.vault_document_file_path!, `DSA - ${dsa.counterparty_name}`)}
                       class="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-semibold hover:underline mt-1"
                     >
                       <FileText class="h-3 w-3" />
@@ -772,12 +786,26 @@
           <button
             type="submit"
             disabled={isSaving}
-            class="px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-60"
+            class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-xs cursor-pointer disabled:opacity-60"
           >
-            {isSaving ? 'Saving...' : editingDsa ? 'Update Agreement' : 'Save Agreement'}
+            {#if isSaving}
+              <Loader2 class="h-3.5 w-3.5 animate-spin" />
+              <span>Saving...</span>
+            {:else}
+              <span>{editingDsa ? 'Update Agreement' : 'Save Agreement'}</span>
+            {/if}
           </button>
         </div>
       </form>
     </div>
   </div>
 {/if}
+
+<!-- In-App Document / PDF Viewer Modal -->
+<DocumentViewerModal
+  isOpen={viewerOpen}
+  title={viewerTitle}
+  filePath={viewerFilePath}
+  dataUri={viewerDataUri}
+  onClose={() => (viewerOpen = false)}
+/>

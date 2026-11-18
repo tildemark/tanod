@@ -14,6 +14,7 @@
     updatePrivacyOfficer,
     deletePrivacyOfficer
   } from '$lib/api/admin';
+  import { refreshOrganization } from '$lib/stores/orgStore';
   import type { Organization, Department, PrivacyOfficer } from '$lib/types/organization';
   import {
     Building2,
@@ -36,7 +37,8 @@
     Check,
     FileSpreadsheet,
     Award,
-    ArrowRight
+    ArrowRight,
+    Loader2
   } from 'lucide-svelte';
 
   // Tabs
@@ -47,6 +49,8 @@
   let privacyOfficers = $state<PrivacyOfficer[]>([]);
   let isLoading = $state(true);
   let isSavingOrg = $state(false);
+  let isSavingOfficer = $state(false);
+  let isSavingDept = $state(false);
   let statusMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
   let copiedField = $state<string | null>(null);
 
@@ -215,6 +219,7 @@
       });
 
       org = updated;
+      await refreshOrganization();
       statusMessage = { type: 'success', text: 'NPCRS compliance profile & statutory credentials saved.' };
     } catch (err: any) {
       statusMessage = { type: 'error', text: err?.toString() || 'Failed to update organization profile.' };
@@ -284,6 +289,7 @@
       return;
     }
 
+    isSavingOfficer = true;
     try {
       if (editingOfficer) {
         await updatePrivacyOfficer(editingOfficer.id, {
@@ -315,9 +321,12 @@
         org = refetched;
         dpoName = refetched.dpo_name || '';
         dpoEmail = refetched.dpo_email || '';
+        await refreshOrganization();
       }
     } catch (err: any) {
       officerError = err?.toString() || 'Failed to save Privacy Officer.';
+    } finally {
+      isSavingOfficer = false;
     }
   }
 
@@ -328,6 +337,11 @@
       deletingOfficer = null;
       if (org) {
         privacyOfficers = await listPrivacyOfficers(org.id);
+        const refetched = await getOrganization();
+        org = refetched;
+        dpoName = refetched.dpo_name || '';
+        dpoEmail = refetched.dpo_email || '';
+        await refreshOrganization();
       }
     } catch (err: any) {
       alert(err?.toString() || 'Failed to delete officer.');
@@ -357,6 +371,7 @@
       return;
     }
 
+    isSavingDept = true;
     try {
       if (editingDept) {
         await updateDepartment(editingDept.id, {
@@ -377,6 +392,8 @@
       }
     } catch (err: any) {
       deptError = err?.toString() || 'Failed to save department.';
+    } finally {
+      isSavingDept = false;
     }
   }
 
@@ -688,8 +705,13 @@
           disabled={isSavingOrg}
           class="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold tracking-wide transition-all shadow-sm disabled:opacity-60 cursor-pointer"
         >
-          <Save class="h-4 w-4" />
-          <span>{isSavingOrg ? 'Saving Changes...' : 'Save NPCRS Profile'}</span>
+          {#if isSavingOrg}
+            <Loader2 class="h-4 w-4 animate-spin" />
+            <span>Saving Changes...</span>
+          {:else}
+            <Save class="h-4 w-4" />
+            <span>Save NPCRS Profile</span>
+          {/if}
         </button>
       </div>
     </form>
@@ -938,9 +960,15 @@
         </button>
         <button
           onclick={handleSaveOfficer}
-          class="px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all cursor-pointer shadow-xs"
+          disabled={isSavingOfficer}
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all cursor-pointer shadow-xs disabled:opacity-60"
         >
-          Save Officer
+          {#if isSavingOfficer}
+            <Loader2 class="h-3.5 w-3.5 animate-spin" />
+            <span>Saving...</span>
+          {:else}
+            <span>Save Officer</span>
+          {/if}
         </button>
       </div>
     </div>
@@ -997,9 +1025,15 @@
         </button>
         <button
           onclick={handleSaveDepartment}
-          class="px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all cursor-pointer shadow-xs"
+          disabled={isSavingDept}
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all cursor-pointer shadow-xs disabled:opacity-60"
         >
-          {editingDept ? 'Update Department' : 'Create Department'}
+          {#if isSavingDept}
+            <Loader2 class="h-3.5 w-3.5 animate-spin" />
+            <span>Saving...</span>
+          {:else}
+            <span>{editingDept ? 'Update Department' : 'Create Department'}</span>
+          {/if}
         </button>
       </div>
     </div>

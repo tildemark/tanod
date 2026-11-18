@@ -4,6 +4,7 @@
     DATA_CATEGORIES,
     LAWFUL_BASIS,
     RECIPIENTS,
+    processSchema,
     type Process,
     type ProcessFormData
   } from '$lib/types/ropa';
@@ -18,7 +19,8 @@
     Info,
     Shield,
     FolderKanban,
-    Sparkles
+    Sparkles,
+    Loader2
   } from 'lucide-svelte';
 
   let {
@@ -161,20 +163,29 @@
 
   async function handleFinalSubmit() {
     if (!validateStep(4)) return;
-    isSaving = true;
 
+    const payload: ProcessFormData = {
+      dept_id: deptId,
+      title: title.trim(),
+      description: description.trim() || undefined,
+      data_subjects: selectedSubjects,
+      data_categories: selectedCategories,
+      lawful_basis: selectedBasis,
+      recipients: selectedRecipients,
+      retention_period: retentionPeriod.trim(),
+      status
+    };
+
+    const validationResult = processSchema.safeParse(payload);
+    if (!validationResult.success) {
+      const firstIssue = validationResult.error.issues[0];
+      validationError = firstIssue ? firstIssue.message : 'Validation failed. Please review the inputs.';
+      return;
+    }
+
+    isSaving = true;
     try {
-      await onSave({
-        dept_id: deptId,
-        title: title.trim(),
-        description: description.trim() || undefined,
-        data_subjects: selectedSubjects,
-        data_categories: selectedCategories,
-        lawful_basis: selectedBasis,
-        recipients: selectedRecipients,
-        retention_period: retentionPeriod.trim(),
-        status
-      });
+      await onSave(validationResult.data);
     } catch (e: any) {
       validationError = e?.toString() || 'Failed to save ROPA record.';
     } finally {
@@ -602,8 +613,13 @@
             onclick={handleFinalSubmit}
             class="inline-flex items-center gap-1.5 px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold tracking-wide transition-all cursor-pointer shadow-xs disabled:opacity-60"
           >
-            <Check class="h-4 w-4" />
-            <span>{isSaving ? 'Saving ROPA...' : (initialData ? 'Update ROPA Entry' : 'Record in Official ROPA')}</span>
+            {#if isSaving}
+              <Loader2 class="h-4 w-4 animate-spin" />
+              <span>Saving ROPA...</span>
+            {:else}
+              <Check class="h-4 w-4" />
+              <span>{initialData ? 'Update ROPA Entry' : 'Record in Official ROPA'}</span>
+            {/if}
           </button>
         {/if}
       </div>

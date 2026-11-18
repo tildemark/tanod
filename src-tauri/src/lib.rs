@@ -61,6 +61,8 @@ pub fn run() {
             commands::vault::list_statutory_documents,
             commands::vault::upload_statutory_document,
             commands::vault::open_statutory_document,
+            commands::vault::read_statutory_document,
+            commands::vault::read_file_from_disk,
             commands::vault::open_vault_folder,
             commands::vault::delete_statutory_document,
             // Data Sharing & Outsourcing Agreements (DSA/DOA)
@@ -74,6 +76,10 @@ pub fn run() {
             commands::backup::restore_backup_archive,
         ])
         .setup(|app| {
+            app.handle().plugin(tauri_plugin_notification::init())?;
+            app.handle().plugin(tauri_plugin_dialog::init())?;
+            app.handle().plugin(tauri_plugin_fs::init())?;
+
             if cfg!(debug_assertions) {
                 app.handle().plugin(
                     tauri_plugin_log::Builder::default()

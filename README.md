@@ -10,7 +10,7 @@
 
 **TANOD Desktop** is a secure, standalone Windows application engineered specifically for Philippine Data Protection Officers (DPOs), compliance managers, and corporate legal counsel.
 
-Unlike conventional cloud-based compliance tools that require uploading confidential corporate operations, breach records, and employee rosters to third-party SaaS servers, TANOD operates on a strict **zero-telemetry, local-first architecture**. All compliance records, incident logs, and impact assessments remain isolated inside a hardware-encrypted SQLite database on the DPO's local workstation.
+Unlike conventional cloud-based compliance tools that require uploading confidential corporate operations, breach records, and employee rosters to third-party SaaS servers, TANOD operates on a strict **zero-telemetry, local-first architecture**. All compliance records, incident logs, and impact assessments remain isolated inside a standalone SQLite database on the DPO's local workstation.
 
 ---
 
@@ -43,7 +43,7 @@ $$\text{Risk Rating} = \text{Impact (1–4)} \times \text{Probability (1–4)}$$
 
 * **1:** Negligible · **2–4:** Low Risk · **6–9:** Medium Risk · **10–16:** High Risk
 
-* **Audit-Ready PDF Export:** Direct compilation of complete PIA dossiers into print-ready PDF reports.
+* **Audit-Ready PDF / Dossier Export:** Native print-to-PDF compilation generating complete, signable PIA audit dossiers and ASIR tabular regulatory reports.
 
 ### 3. Incident & Breach Management
 
@@ -120,7 +120,7 @@ The dashboard aggregates live data from all modules:
 graph TD
     subgraph Frontend ["SvelteKit SPA (adapter-static)"]
         UI[Executive Legal UI]
-        Forms[Superforms + Zod Validation]
+        Forms[Svelte 5 Runes + Zod Validation]
         Tables[TanStack Table Registry]
         Board[DSR Kanban Board]
     end
@@ -132,11 +132,11 @@ graph TD
     subgraph Backend [Rust Core]
         Engine[Compliance Logic and Risk Calculation]
         Audit[SHA-256 Audit Chain Writer]
-        DBDriver[rusqlite + SQLCipher]
+        DBDriver[rusqlite Embedded SQLite Driver]
     end
 
     subgraph Storage ["Local Machine (%APPDATA%)"]
-        DB[(tanod.db AES-256 Encrypted)]
+        DB[(tanod.db Local SQLite Storage)]
         Assets[assets/ Logos and Brand]
         Vault["vault/{year}/ Statutory Docs"]
     end
@@ -163,11 +163,11 @@ graph TD
 | --- | --- | --- |
 | **Desktop Shell** | [Tauri v2](https://tauri.app/) | Secure, lightweight OS wrapper utilizing the Windows WebView2 runtime. |
 | **Backend Core** | [Rust](https://www.rust-lang.org/) | Type-safe, high-performance logic, local I/O, and IPC command handling. |
-| **Database** | [SQLite](https://www.sqlite.org/) via `rusqlite` | Serverless relational storage with SQLCipher AES-256 at-rest encryption. |
+| **Database** | [SQLite](https://www.sqlite.org/) via `rusqlite` | Serverless local relational storage with WAL mode, foreign key constraints, and SHA-256 tamper-evident audit chaining. |
 | **Frontend Framework** | [SvelteKit](https://kit.svelte.dev/) | Client-side Single Page Application (SPA) compiled via `@sveltejs/adapter-static`. |
 | **UI & Icons** | [lucide-svelte](https://lucide.dev/) + Tailwind CSS v4 | Icon library and utility-first styling with Slate/Amber theme. |
 | **Data Tables** | [@tanstack/svelte-table](https://tanstack.com/table) | Virtualized, searchable data tables for compliance registers. |
-| **Validation** | [Superforms](https://superforms.rocks/) + [Zod](https://zod.dev/) | Strict client-side validation matching Philippine legal requirements. |
+| **Validation** | [Zod](https://zod.dev/) | Strict client-side validation matching Philippine statutory requirements. |
 | **Drag & Drop** | [svelte-dnd-action](https://github.com/isaacs/node-lru-cache) | DSR Kanban board drag-and-drop with SLA swimlanes. |
 
 ---

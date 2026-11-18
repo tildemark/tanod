@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { listDpoMemos, createDpoMemo, updateDpoMemo, deleteDpoMemo } from '$lib/api/enforcement';
 	import { getOrganization, listDepartments } from '$lib/api/admin';
+	import { Loader2 } from 'lucide-svelte';
 	import type { DpoMemo, CreateMemoPayload, UpdateMemoPayload, PolicyStatus, PolicyCategory } from '$lib/types/enforcement';
 	import type { Organization, Department } from '$lib/types/organization';
 
@@ -34,6 +35,7 @@
 	let departments: Department[] = [];
 	let loading = true;
 	let showModal = false;
+	let isSaving = false;
 	let editingMemo: DpoMemo | null = null;
 	let previewMemo: DpoMemo | null = null;
 
@@ -111,6 +113,7 @@
 	async function handleSave() {
 		if (!title.trim() || !content.trim() || !org) return;
 
+		isSaving = true;
 		try {
 			if (editingMemo) {
 				const payload: UpdateMemoPayload = {
@@ -159,6 +162,8 @@
 			resetForm();
 		} catch (err) {
 			alert('Failed to save policy/directive: ' + err);
+		} finally {
+			isSaving = false;
 		}
 	}
 
@@ -299,7 +304,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 		<div class="flex items-center gap-2.5 flex-wrap">
 			<button
 				type="button"
-				on:click={() => openCreateModal('PRIVACY_MANUAL')}
+				onclick={() => openCreateModal('PRIVACY_MANUAL')}
 				class="inline-flex items-center gap-2 px-3.5 py-2 bg-white hover:bg-slate-50 text-blue-900 rounded-lg text-xs font-semibold border border-blue-300 transition-all cursor-pointer shadow-2xs"
 			>
 				<span>📘</span>
@@ -308,7 +313,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 
 			<button
 				type="button"
-				on:click={() => openCreateModal('POLICY')}
+				onclick={() => openCreateModal('POLICY')}
 				class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-xs transition-all cursor-pointer"
 			>
 				<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -348,7 +353,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 			{#if !hasPrivacyManual}
 				<button
 					type="button"
-					on:click={() => { openCreateModal('PRIVACY_MANUAL'); loadTemplate('MANUAL'); }}
+					onclick={() => { openCreateModal('PRIVACY_MANUAL'); loadTemplate('MANUAL'); }}
 					class="px-3.5 py-1.5 bg-amber-900 hover:bg-amber-800 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer"
 				>
 					Generate from NPC Template
@@ -431,7 +436,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 			<span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">Security Pillar:</span>
 			<button
 				type="button"
-				on:click={() => selectedPillarFilter = 'ALL'}
+				onclick={() => selectedPillarFilter = 'ALL'}
 				class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer {selectedPillarFilter === 'ALL' ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:text-slate-900'}"
 			>
 				All Pillars ({memos.length})
@@ -439,7 +444,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 			{#each PILLARS as pil}
 				<button
 					type="button"
-					on:click={() => selectedPillarFilter = pil.value}
+					onclick={() => selectedPillarFilter = pil.value}
 					class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer {selectedPillarFilter === pil.value ? 'bg-slate-900 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:text-slate-900'}"
 				>
 					{pil.label} ({memos.filter(m => m.pillar === pil.value).length})
@@ -470,7 +475,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 			<div class="flex items-center justify-center gap-2 pt-2">
 				<button
 					type="button"
-					on:click={() => { openCreateModal('PRIVACY_MANUAL'); loadTemplate('MANUAL'); }}
+					onclick={() => { openCreateModal('PRIVACY_MANUAL'); loadTemplate('MANUAL'); }}
 					class="px-4 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-lg text-xs font-semibold"
 				>
 					Generate Data Privacy Manual
@@ -518,7 +523,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 						<button
 							type="button"
 							class="text-left font-bold text-slate-900 text-base hover:text-blue-600 transition-colors block cursor-pointer"
-							on:click={() => previewMemo = memo}
+							onclick={() => previewMemo = memo}
 						>
 							{memo.title}
 						</button>
@@ -543,7 +548,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 					<div class="flex items-center gap-2 shrink-0">
 						<button
 							type="button"
-							on:click={() => previewMemo = memo}
+							onclick={() => previewMemo = memo}
 							class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 rounded-lg text-xs font-semibold border border-slate-200 transition-all flex items-center gap-1.5 cursor-pointer"
 						>
 							<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -555,7 +560,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 
 						<button
 							type="button"
-							on:click={() => openEditModal(memo)}
+							onclick={() => openEditModal(memo)}
 							class="p-1.5 text-slate-400 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
 							title="Edit Document & Status"
 						>
@@ -566,7 +571,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 
 						<button
 							type="button"
-							on:click={() => handleDelete(memo.id)}
+							onclick={() => handleDelete(memo.id)}
 							class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
 							aria-label="Delete document"
 							title="Delete Document"
@@ -593,7 +598,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 					</h3>
 					<p class="text-xs text-slate-500">Document accountability and enforce Philippine DPA organizational measures.</p>
 				</div>
-				<button type="button" aria-label="Close dialog" on:click={() => showModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+				<button type="button" aria-label="Close dialog" onclick={() => showModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
@@ -607,21 +612,21 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 					<div class="flex items-center gap-1.5 flex-wrap">
 						<button
 							type="button"
-							on:click={() => loadTemplate('MANUAL')}
+							onclick={() => loadTemplate('MANUAL')}
 							class="text-[10.5px] px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold border border-blue-200 hover:bg-blue-200"
 						>
 							📘 Data Privacy Manual
 						</button>
 						<button
 							type="button"
-							on:click={() => loadTemplate('PASSWORD')}
+							onclick={() => loadTemplate('PASSWORD')}
 							class="text-[10.5px] px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-semibold border border-purple-200 hover:bg-purple-200"
 						>
 							🔒 Password & Lockout Policy
 						</button>
 						<button
 							type="button"
-							on:click={() => loadTemplate('NOTICE')}
+							onclick={() => loadTemplate('NOTICE')}
 							class="text-[10.5px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold border border-emerald-200 hover:bg-emerald-200"
 						>
 							👁️ Public Privacy Notice
@@ -630,7 +635,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 				</div>
 			{/if}
 
-			<form on:submit|preventDefault={handleSave} class="space-y-4">
+			<form onsubmit={(e) => { e.preventDefault(); handleSave(); }} class="space-y-4">
 				<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 					<!-- Classification Category -->
 					<div>
@@ -762,16 +767,22 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
 					<button
 						type="button"
-						on:click={() => showModal = false}
+						onclick={() => showModal = false}
 						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg"
 					>
 						Cancel
 					</button>
 					<button
 						type="submit"
-						class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs"
+						disabled={isSaving}
+						class="inline-flex items-center gap-1.5 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-60 cursor-pointer"
 					>
-						{editingMemo ? 'Update Document' : 'Save & Promulgate Document'}
+						{#if isSaving}
+							<Loader2 class="h-3.5 w-3.5 animate-spin" />
+							<span>Saving...</span>
+						{:else}
+							<span>{editingMemo ? 'Update Document' : 'Save & Promulgate Document'}</span>
+						{/if}
 					</button>
 				</div>
 			</form>
@@ -803,7 +814,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 				<div class="flex items-center gap-2">
 					<button
 						type="button"
-						on:click={printMemo}
+						onclick={printMemo}
 						class="px-4 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-xs"
 					>
 						<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -811,7 +822,7 @@ To exercise your rights (Access, Correction, Erasure), contact our Data Protecti
 						</svg>
 						Print Official Document
 					</button>
-					<button type="button" aria-label="Close preview" on:click={() => previewMemo = null} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+					<button type="button" aria-label="Close preview" onclick={() => previewMemo = null} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 						<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 						</svg>

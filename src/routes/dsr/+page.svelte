@@ -25,7 +25,8 @@
 		XCircle,
 		MapPin,
 		History,
-		AlertTriangle
+		AlertTriangle,
+		Loader2
 	} from 'lucide-svelte';
 
 	type DsrStatus = 'RECEIVED' | 'UNDER_REVIEW' | 'ACTIONED' | 'REJECTED';
@@ -66,6 +67,8 @@
 	let orgId = '';
 	let loading = true;
 	let showModal = false;
+	let isCreating = false;
+	let isResolving = false;
 	let selectedRequest: DsrRequest | null = null;
 	let actionLogs: DsrActionLog[] = [];
 	let loadingLogs = false;
@@ -196,6 +199,7 @@
 			notes: notes.trim() || undefined
 		};
 
+		isCreating = true;
 		try {
 			await createDsrRequest(payload);
 			showModal = false;
@@ -204,6 +208,8 @@
 		} catch (err) {
 			console.error('Failed to create DSR request:', err);
 			alert('Failed to record DSR: ' + err);
+		} finally {
+			isCreating = false;
 		}
 	}
 
@@ -243,6 +249,7 @@
 			performed_by: resolutionPerformer.trim() || 'Data Protection Officer'
 		};
 
+		isResolving = true;
 		try {
 			await resolveDsrRequest(payload);
 			isResolveModalOpen = false;
@@ -253,6 +260,8 @@
 			}
 		} catch (err) {
 			alert('Failed to resolve DSR: ' + err);
+		} finally {
+			isResolving = false;
 		}
 	}
 
@@ -322,7 +331,7 @@
 		<div class="flex items-center gap-3">
 			<button
 				type="button"
-				on:click={() => { resetForm(); showModal = true; }}
+				onclick={() => { resetForm(); showModal = true; }}
 				class="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-xs shadow-xs transition-all cursor-pointer"
 			>
 				<Plus class="w-4 h-4" />
@@ -371,7 +380,7 @@
 			<div class="flex items-center p-0.5 rounded-lg border border-slate-300 bg-slate-100 ml-1">
 				<button
 					type="button"
-					on:click={() => (viewMode = 'kanban')}
+					onclick={() => (viewMode = 'kanban')}
 					class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all {viewMode === 'kanban' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
 				>
 					<LayoutGrid class="h-3.5 w-3.5" />
@@ -379,7 +388,7 @@
 				</button>
 				<button
 					type="button"
-					on:click={() => (viewMode = 'table')}
+					onclick={() => (viewMode = 'table')}
 					class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all {viewMode === 'table' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-600 hover:text-slate-900'}"
 				>
 					<List class="h-3.5 w-3.5" />
@@ -413,8 +422,8 @@
 					<!-- Drag and Drop Zone with Internal Overflow Scrolling -->
 					<div
 						use:dndzone={{ items: itemsByColumn[col.id], flipDurationMs: 200, dropTargetStyle: { outline: '2px dashed #10b981', borderRadius: '0.5rem' } }}
-						on:consider={(e) => handleDndConsider(col.id, e)}
-						on:finalize={(e) => handleDndFinalize(col.id, e)}
+						onconsider={(e) => handleDndConsider(col.id, e)}
+						onfinalize={(e) => handleDndFinalize(col.id, e)}
 						class="flex-1 flex flex-col gap-2.5 overflow-y-auto pr-1"
 					>
 						{#if itemsByColumn[col.id].length === 0}
@@ -427,10 +436,10 @@
 								<div
 									animate:flip={{ duration: 200 }}
 									class="bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-3.5 shadow-2xs transition-all cursor-grab active:cursor-grabbing hover:shadow-xs text-left group shrink-0"
-									on:click={() => openDetailModal(item)}
+									onclick={() => openDetailModal(item)}
 									role="button"
 									tabindex="0"
-									on:keydown={(e) => e.key === 'Enter' && openDetailModal(item)}
+									onkeydown={(e) => e.key === 'Enter' && openDetailModal(item)}
 								>
 									<!-- Badge & SLA -->
 									<div class="flex items-center justify-between gap-1 mb-2">
@@ -559,7 +568,7 @@
 								<td class="px-5 py-4 text-right">
 									<button
 										type="button"
-										on:click={() => openDetailModal(r)}
+										onclick={() => openDetailModal(r)}
 										class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-200 transition-colors cursor-pointer"
 									>
 										Manage Trail →
@@ -589,14 +598,14 @@
 					<h3 class="text-lg font-bold text-slate-900">Log Data Subject Rights (DSR) Request</h3>
 					<p class="text-xs text-slate-500">RA 10173 mandates response within thirty (30) calendar days.</p>
 				</div>
-				<button type="button" aria-label="Close modal" on:click={() => showModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+				<button type="button" aria-label="Close modal" onclick={() => showModal = false} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
 				</button>
 			</div>
 
-			<form on:submit|preventDefault={handleCreate} class="space-y-4">
+			<form onsubmit={(e) => { e.preventDefault(); handleCreate(); }} class="space-y-4">
 				<div>
 					<span class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Right Invoked *</span>
 					<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -674,16 +683,22 @@
 				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
 					<button
 						type="button"
-						on:click={() => showModal = false}
+						onclick={() => showModal = false}
 						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg"
 					>
 						Cancel
 					</button>
 					<button
 						type="submit"
-						class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg shadow-xs"
+						disabled={isCreating}
+						class="inline-flex items-center gap-1.5 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-lg shadow-xs disabled:opacity-60 cursor-pointer"
 					>
-						Record Statutory Request
+						{#if isCreating}
+							<Loader2 class="h-4 w-4 animate-spin" />
+							<span>Recording...</span>
+						{:else}
+							<span>Record Statutory Request</span>
+						{/if}
 					</button>
 				</div>
 			</form>
@@ -711,7 +726,7 @@
 					</div>
 					<h3 class="text-lg font-bold text-slate-900 mt-1">{req.requester_name}</h3>
 				</div>
-				<button type="button" aria-label="Close details" on:click={() => selectedRequest = null} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
+				<button type="button" aria-label="Close details" onclick={() => selectedRequest = null} class="text-slate-400 hover:text-slate-700 p-1 rounded-lg">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
@@ -817,7 +832,7 @@
 						{#each COLUMNS as col}
 							<button
 								type="button"
-								on:click={async () => {
+								onclick={async () => {
 									if (selectedRequest) {
 										await updateDsrStatus(selectedRequest.id, col.id);
 										selectedRequest.status = col.id;
@@ -834,7 +849,7 @@
 					<div class="flex items-center gap-2">
 						<button
 							type="button"
-							on:click={() => openResolutionForm(req, 'ACTIONED')}
+							onclick={() => openResolutionForm(req, 'ACTIONED')}
 							class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer flex items-center gap-1"
 						>
 							<CheckCircle2 class="w-3.5 h-3.5" />
@@ -842,7 +857,7 @@
 						</button>
 						<button
 							type="button"
-							on:click={() => openResolutionForm(req, 'REJECTED')}
+							onclick={() => openResolutionForm(req, 'REJECTED')}
 							class="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer flex items-center gap-1"
 						>
 							<XCircle class="w-3.5 h-3.5" />
@@ -856,14 +871,14 @@
 			<div class="flex items-center justify-between pt-3 border-t border-slate-100">
 				<button
 					type="button"
-					on:click={() => handleDelete(req.id)}
+					onclick={() => handleDelete(req.id)}
 					class="text-xs text-rose-600 hover:text-rose-700 font-semibold px-2 py-1 rounded hover:bg-rose-50 cursor-pointer"
 				>
 					Delete Entry
 				</button>
 				<button
 					type="button"
-					on:click={() => selectedRequest = null}
+					onclick={() => selectedRequest = null}
 					class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg cursor-pointer"
 				>
 					Close
@@ -884,14 +899,14 @@
 					</h3>
 					<p class="text-xs text-slate-500">Record what was given, redacted, erased, or denied for future audit inspection.</p>
 				</div>
-				<button type="button" aria-label="Close" on:click={() => isResolveModalOpen = false} class="text-slate-400 hover:text-slate-700">
+				<button type="button" aria-label="Close" onclick={() => isResolveModalOpen = false} class="text-slate-400 hover:text-slate-700">
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 					</svg>
 				</button>
 			</div>
 
-			<form on:submit|preventDefault={submitResolution} class="space-y-3.5">
+			<form onsubmit={(e) => { e.preventDefault(); submitResolution(); }} class="space-y-3.5">
 				<div>
 					<label for="res-action" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Specific Action Taken *</label>
 					<select
@@ -942,16 +957,22 @@
 				<div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
 					<button
 						type="button"
-						on:click={() => isResolveModalOpen = false}
+						onclick={() => isResolveModalOpen = false}
 						class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg"
 					>
 						Cancel
 					</button>
 					<button
 						type="submit"
-						class="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs"
+						disabled={isResolving}
+						class="inline-flex items-center gap-1.5 px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-xs disabled:opacity-60 cursor-pointer"
 					>
-						Confirm & Append to Audit Trail
+						{#if isResolving}
+							<Loader2 class="h-3.5 w-3.5 animate-spin" />
+							<span>Appending...</span>
+						{:else}
+							<span>Confirm & Append to Audit Trail</span>
+						{/if}
 					</button>
 				</div>
 			</form>

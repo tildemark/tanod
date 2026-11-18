@@ -225,6 +225,37 @@ pub fn open_vault_folder(year: Option<i32>) -> Result<(), String> {
     Ok(())
 }
 
+/// Reads a document from the vault and returns its content as a base64 encoded data URI string.
+#[tauri::command]
+pub fn read_statutory_document(file_path: String) -> Result<String, String> {
+    let path = Path::new(&file_path);
+    if !path.exists() {
+        return Err(format!("File does not exist: {}", file_path));
+    }
+
+    let bytes = fs::read(path).map_err(|e| format!("Failed to read file: {}", e))?;
+    
+    use base64::Engine;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    let mime = match extension.as_str() {
+        "pdf" => "application/pdf",
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "webp" => "image/webp",
+        "txt" => "text/plain",
+        _ => "application/octet-stream",
+    };
+
+    Ok(format!("data:{};base64,{}", mime, b64))
+}
+
 /// Deletes a document entry and removes the physical file from the local vault.
 #[tauri::command]
 pub fn delete_statutory_document(id: String, state: State<'_, DbState>) -> Result<(), String> {
@@ -253,4 +284,66 @@ pub fn delete_statutory_document(id: String, state: State<'_, DbState>) -> Resul
     }
 
     Ok(())
+}
+
+#[derive(Debug, Serialize)]
+pub struct LoadedFileContent {
+    pub file_name: String,
+    pub file_size: u64,
+    pub mime_type: String,
+    pub base64_content: String,
+}
+
+/// Reads any local file by absolute path and returns base64 content with metadata.
+/// Useful for native drag-and-drop file paths from OS.
+#[tauri::command]
+pub fn read_file_from_disk(file_path: String) -> Result<LoadedFileContent, String> {
+    let path = Path::new(&file_path);
+    if !path.exists() {
+        return Err(format!("File does not exist: {}", file_path));
+    }
+    if !path.is_file() {
+        return Err("Selected path is not a valid file".to_string());
+    }
+
+    let file_name = path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("document")
+        .to_string();
+
+    let metadata = fs::metadata(path).map_err(|e| format!("Failed to read file metadata: {}", e))?;
+    let file_size = metadata.len();
+
+    let bytes = fs::read(path).map_err(|e| format!("Failed to read file: {}", e))?;
+
+    use base64::Engine;
+    let base64_content = base64::engine::general_purpose::STANDARD.encode(&bytes);
+
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    let mime_type = match extension.as_str() {
+        "pdf" => "application/pdf",
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "webp" => "image/webp",
+        "doc" => "application/msword",
+        "docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "xls" => "application/vnd.ms-excel",
+        "txt" => "text/plain",
+        _ => "application/octet-stream",
+    }
+    .to_string();
+
+    Ok(LoadedFileContent {
+        file_name,
+        file_size,
+        mime_type,
+        base64_content,
+    })
 }

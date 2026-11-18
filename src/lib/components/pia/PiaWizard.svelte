@@ -21,7 +21,8 @@
     FileText,
     Activity,
     Info,
-    Scale
+    Scale,
+    Loader2
   } from 'lucide-svelte';
 
   let {
@@ -463,8 +464,13 @@
             onclick={handleFinalSave}
             class="inline-flex items-center gap-1.5 px-6 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold tracking-wide transition-all cursor-pointer shadow-xs disabled:opacity-60"
           >
-            <Check class="h-4 w-4" />
-            <span>{isSaving ? 'Saving Assessment...' : 'Record PIA Assessment'}</span>
+            {#if isSaving}
+              <Loader2 class="h-4 w-4 animate-spin" />
+              <span>Saving Assessment...</span>
+            {:else}
+              <Check class="h-4 w-4" />
+              <span>Record PIA Assessment</span>
+            {/if}
           </button>
         {/if}
       </div>

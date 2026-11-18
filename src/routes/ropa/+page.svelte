@@ -5,7 +5,7 @@
   import type { Process, ProcessFormData } from '$lib/types/ropa';
   import type { Department } from '$lib/types/organization';
   import RopaWizard from '$lib/components/ropa/RopaWizard.svelte';
-  import { downloadRopaExcelTemplate, parseRopaExcelFile } from '$lib/services/excelService';
+  import { downloadRopaExcelTemplate, parseRopaExcelFile, parseRopaJsonFile } from '$lib/services/excelService';
   import { PRE_FILLED_TEMPLATES } from '$lib/data/ropaTemplates';
   import {
     FolderLock,
@@ -24,7 +24,10 @@
     Building2,
     Calendar,
     Check,
-    X
+    X,
+    ArrowUpDown,
+    ArrowUp,
+    ArrowDown
   } from 'lucide-svelte';
 
   let processes = $state<Process[]>([]);
@@ -32,11 +35,37 @@
   let isLoading = $state(true);
   let statusMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Filters
-  let searchQuery = $state('');
+  // Filters & Sorting State
+  let rawSearchQuery = $state('');
+  let debouncedSearch = $state('');
+  let debounceTimer: any = null;
+
+  function onSearchInput(e: Event) {
+    const val = (e.target as HTMLInputElement).value;
+    rawSearchQuery = val;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debouncedSearch = val;
+    }, 250);
+  }
+
   let selectedDepartmentFilter = $state('ALL');
   let selectedStatusFilter = $state('ALL');
   let selectedRiskFilter = $state('ALL');
+
+  // Sorting
+  type SortColumn = 'title' | 'department_name' | 'status' | 'risk_level' | 'retention_period';
+  let sortColumn = $state<SortColumn>('title');
+  let sortDirection = $state<'asc' | 'desc'>('asc');
+
+  function toggleSort(col: SortColumn) {
+    if (sortColumn === col) {
+      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortColumn = col;
+      sortDirection = 'asc';
+    }
+  }
 
   // Wizard Modal
   let isWizardOpen = $state(false);
@@ -78,22 +107,52 @@
     loadData();
   });
 
-  // Filtered entries
+  // Filtered & Sorted entries
   let filteredProcesses = $derived(
-    processes.filter((p) => {
-      const matchesSearch =
-        searchQuery.trim() === '' ||
-        p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        p.data_categories.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        p.data_subjects.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+    processes
+      .filter((p) => {
+        const query = debouncedSearch.trim().toLowerCase();
+        const matchesSearch =
+          query === '' ||
+          p.title.toLowerCase().includes(query) ||
+          (p.description && p.description.toLowerCase().includes(query)) ||
+          p.data_categories.some((c) => c.toLowerCase().includes(query)) ||
+          p.data_subjects.some((s) => s.toLowerCase().includes(query)) ||
+          (p.department_name && p.department_name.toLowerCase().includes(query));
 
-      const matchesDept = selectedDepartmentFilter === 'ALL' || p.dept_id === selectedDepartmentFilter;
-      const matchesStatus = selectedStatusFilter === 'ALL' || p.status === selectedStatusFilter;
-      const matchesRisk = selectedRiskFilter === 'ALL' || p.risk_level === selectedRiskFilter;
+        const matchesDept = selectedDepartmentFilter === 'ALL' || p.dept_id === selectedDepartmentFilter;
+        const matchesStatus = selectedStatusFilter === 'ALL' || p.status === selectedStatusFilter;
+        const matchesRisk = selectedRiskFilter === 'ALL' || p.risk_level === selectedRiskFilter;
 
-      return matchesSearch && matchesDept && matchesStatus && matchesRisk;
-    })
+        return matchesSearch && matchesDept && matchesStatus && matchesRisk;
+      })
+      .sort((a, b) => {
+        let valA = '';
+        let valB = '';
+
+        if (sortColumn === 'title') {
+          valA = a.title.toLowerCase();
+          valB = b.title.toLowerCase();
+        } else if (sortColumn === 'department_name') {
+          valA = (a.department_name || '').toLowerCase();
+          valB = (b.department_name || '').toLowerCase();
+        } else if (sortColumn === 'status') {
+          valA = a.status;
+          valB = b.status;
+        } else if (sortColumn === 'risk_level') {
+          const riskWeight = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+          const weightA = riskWeight[a.risk_level as 'HIGH' | 'MEDIUM' | 'LOW'] || 0;
+          const weightB = riskWeight[b.risk_level as 'HIGH' | 'MEDIUM' | 'LOW'] || 0;
+          return sortDirection === 'asc' ? weightA - weightB : weightB - weightA;
+        } else if (sortColumn === 'retention_period') {
+          valA = (a.retention_period || '').toLowerCase();
+          valB = (b.retention_period || '').toLowerCase();
+        }
+
+        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      })
   );
 
   function openCreateWizard() {
@@ -172,6 +231,40 @@
     URL.revokeObjectURL(url);
   }
 
+  function exportJson() {
+    if (processes.length === 0) return;
+    const exportData = {
+      version: '1.1.0',
+      exported_at: new Date().toISOString(),
+      record_count: processes.length,
+      processes: processes.map((p) => ({
+        id: p.id,
+        dept_id: p.dept_id,
+        department_name: p.department_name,
+        title: p.title,
+        description: p.description,
+        data_subjects: p.data_subjects,
+        data_categories: p.data_categories,
+        lawful_basis: p.lawful_basis,
+        recipients: p.recipients,
+        retention_period: p.retention_period,
+        status: p.status,
+        risk_level: p.risk_level,
+        created_at: p.created_at,
+        updated_at: p.updated_at
+      }))
+    };
+
+    const jsonContent = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `tanod-ropa-registry-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   async function handleExcelFileSelected(event: Event) {
     const target = event.target as HTMLInputElement;
     if (!target.files || target.files.length === 0) return;
@@ -180,11 +273,17 @@
     parsedBatch = [];
 
     try {
-      const res = await parseRopaExcelFile(excelFile, departments);
+      const fileName = excelFile.name.toLowerCase();
+      let res;
+      if (fileName.endsWith('.json')) {
+        res = await parseRopaJsonFile(excelFile, departments);
+      } else {
+        res = await parseRopaExcelFile(excelFile, departments);
+      }
       parsedBatch = res.validProcesses;
       parseErrors = res.errors;
     } catch (e: any) {
-      parseErrors = [e?.toString() || 'Failed to read Excel file format.'];
+      parseErrors = [e?.toString() || 'Failed to read file format.'];
     }
   }
 
@@ -303,9 +402,20 @@
       <button
         onclick={exportCsv}
         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all cursor-pointer shadow-2xs"
+        title="Export full registry to CSV format"
       >
         <Download class="h-3.5 w-3.5" />
-        <span>Export CSV</span>
+        <span>CSV</span>
+      </button>
+
+      <!-- Export JSON -->
+      <button
+        onclick={exportJson}
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition-all cursor-pointer shadow-2xs"
+        title="Export full registry to JSON format"
+      >
+        <Download class="h-3.5 w-3.5" />
+        <span>JSON</span>
       </button>
 
       <div class="h-4 w-px bg-slate-300 mx-1 hidden sm:block"></div>
@@ -350,8 +460,9 @@
       <Search class="h-4 w-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
       <input
         type="text"
-        bind:value={searchQuery}
-        placeholder="Filter by title, category, data subject, or keywords..."
+        value={rawSearchQuery}
+        oninput={onSearchInput}
+        placeholder="Search by title, department, data subject, or category (debounced)..."
         class="w-full text-xs pl-9 pr-3 py-2 rounded-md border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-slate-900 bg-white"
       />
     </div>
@@ -399,12 +510,64 @@
       <table class="w-full text-left text-xs">
         <thead class="bg-slate-50 border-b border-slate-200 text-slate-700 font-semibold uppercase tracking-wider text-[10px]">
           <tr>
-            <th class="px-5 py-3.5">Activity & Division</th>
+            <th class="px-5 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors select-none" onclick={() => toggleSort('title')}>
+              <div class="flex items-center gap-1.5">
+                <span>Activity & Division</span>
+                {#if sortColumn === 'title'}
+                  {#if sortDirection === 'asc'}
+                    <ArrowUp class="h-3 w-3 text-slate-900" />
+                  {:else}
+                    <ArrowDown class="h-3 w-3 text-slate-900" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="h-3 w-3 text-slate-400" />
+                {/if}
+              </div>
+            </th>
             <th class="px-5 py-3.5">Subjects & Data Categories</th>
             <th class="px-5 py-3.5">Lawful Grounds (Sec. 12/13)</th>
-            <th class="px-5 py-3.5">Retention Period</th>
-            <th class="px-5 py-3.5 text-center">Status</th>
-            <th class="px-5 py-3.5 text-center">Risk Rating</th>
+            <th class="px-5 py-3.5 cursor-pointer hover:bg-slate-100 transition-colors select-none" onclick={() => toggleSort('retention_period')}>
+              <div class="flex items-center gap-1.5">
+                <span>Retention Period</span>
+                {#if sortColumn === 'retention_period'}
+                  {#if sortDirection === 'asc'}
+                    <ArrowUp class="h-3 w-3 text-slate-900" />
+                  {:else}
+                    <ArrowDown class="h-3 w-3 text-slate-900" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="h-3 w-3 text-slate-400" />
+                {/if}
+              </div>
+            </th>
+            <th class="px-5 py-3.5 text-center cursor-pointer hover:bg-slate-100 transition-colors select-none" onclick={() => toggleSort('status')}>
+              <div class="flex items-center justify-center gap-1.5">
+                <span>Status</span>
+                {#if sortColumn === 'status'}
+                  {#if sortDirection === 'asc'}
+                    <ArrowUp class="h-3 w-3 text-slate-900" />
+                  {:else}
+                    <ArrowDown class="h-3 w-3 text-slate-900" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="h-3 w-3 text-slate-400" />
+                {/if}
+              </div>
+            </th>
+            <th class="px-5 py-3.5 text-center cursor-pointer hover:bg-slate-100 transition-colors select-none" onclick={() => toggleSort('risk_level')}>
+              <div class="flex items-center justify-center gap-1.5">
+                <span>Risk Rating</span>
+                {#if sortColumn === 'risk_level'}
+                  {#if sortDirection === 'asc'}
+                    <ArrowUp class="h-3 w-3 text-slate-900" />
+                  {:else}
+                    <ArrowDown class="h-3 w-3 text-slate-900" />
+                  {/if}
+                {:else}
+                  <ArrowUpDown class="h-3 w-3 text-slate-400" />
+                {/if}
+              </div>
+            </th>
             <th class="px-5 py-3.5 text-right">Actions</th>
           </tr>
         </thead>
@@ -516,7 +679,7 @@
               <td colspan="7" class="px-6 py-12 text-center text-xs text-slate-400">
                 {#if isLoading}
                   Loading official ROPA entries from local database...
-                {:else if searchQuery.trim() || selectedDepartmentFilter !== 'ALL' || selectedStatusFilter !== 'ALL'}
+                {:else if debouncedSearch.trim() || selectedDepartmentFilter !== 'ALL' || selectedStatusFilter !== 'ALL' || selectedRiskFilter !== 'ALL'}
                   No processing activities match the specified filter criteria.
                 {:else}
                   No records of processing activities found. Click "Add Processing Activity" to document your organization's first processing workflow.
@@ -626,19 +789,19 @@
 
         <!-- Step 2: Upload File Drag & Drop Zone -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-2">Upload Completed Excel File</label>
+          <label class="block text-xs font-semibold text-slate-700 mb-2">Upload Completed File (Excel, CSV, or JSON)</label>
           <div class="border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-xl p-6 text-center bg-slate-50/50 flex flex-col items-center justify-center cursor-pointer relative">
             <input
               type="file"
-              accept=".xlsx, .xls, .csv"
+              accept=".xlsx, .xls, .csv, .json"
               onchange={handleExcelFileSelected}
               class="absolute inset-0 opacity-0 cursor-pointer"
             />
             <Upload class="h-8 w-8 text-slate-400 mb-2" />
             <div class="text-xs font-semibold text-slate-700">
-              {excelFile ? excelFile.name : 'Click to select or drag and drop your spreadsheet here'}
+              {excelFile ? excelFile.name : 'Click to select or drag and drop your file here'}
             </div>
-            <div class="text-[10px] text-slate-500 mt-1">Supports Microsoft Excel (.xlsx, .xls) and CSV</div>
+            <div class="text-[10px] text-slate-500 mt-1">Supports Microsoft Excel (.xlsx, .xls), CSV, and structured JSON</div>
           </div>
         </div>
 

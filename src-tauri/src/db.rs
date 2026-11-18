@@ -199,12 +199,15 @@ fn run_migrations(conn: &Connection) -> Result<()> {
             org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
             year INTEGER NOT NULL,
             category TEXT NOT NULL CHECK(category IN (
+                'SEC_REGISTRATION',
                 'SEC_GIS',
                 'SECRETARY_CERTIFICATE',
                 'BOARD_RESOLUTION',
                 'NOTARIZED_DPO_FORM',
+                'BUSINESS_PERMIT',
                 'NPC_REGISTRATION_CERT',
                 'NPC_SEAL_OF_REGISTRATION',
+                'OFFICIAL_RECEIPT',
                 'DATA_SHARING_AGREEMENT',
                 'OTHER_COMPLIANCE'
             )),
@@ -297,6 +300,52 @@ fn run_migrations(conn: &Connection) -> Result<()> {
 
     for stmt in alter_statements {
         let _ = conn.execute(stmt, []);
+    }
+
+    // SQLite 3.35.0+ allows ALTER TABLE DROP CONSTRAINT, or we can ensure table check constraint
+    // by migrating existing table if it was created under previous 8-item CHECK constraint.
+    let table_sql: String = conn
+        .query_row(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='statutory_documents'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap_or_default();
+
+    if !table_sql.is_empty() && (!table_sql.contains("BUSINESS_PERMIT") || !table_sql.contains("SEC_REGISTRATION") || !table_sql.contains("OFFICIAL_RECEIPT")) {
+        log::info!("Migrating statutory_documents table to include OFFICIAL_RECEIPT check constraint...");
+        let _ = conn.execute_batch(
+            "BEGIN TRANSACTION;
+             CREATE TABLE statutory_documents_new (
+                 id TEXT PRIMARY KEY,
+                 org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+                 year INTEGER NOT NULL,
+                 category TEXT NOT NULL CHECK(category IN (
+                     'SEC_REGISTRATION',
+                     'SEC_GIS',
+                     'SECRETARY_CERTIFICATE',
+                     'BOARD_RESOLUTION',
+                     'NOTARIZED_DPO_FORM',
+                     'BUSINESS_PERMIT',
+                     'NPC_REGISTRATION_CERT',
+                     'NPC_SEAL_OF_REGISTRATION',
+                     'OFFICIAL_RECEIPT',
+                     'DATA_SHARING_AGREEMENT',
+                     'OTHER_COMPLIANCE'
+                 )),
+                 title TEXT NOT NULL,
+                 file_name TEXT NOT NULL,
+                 file_path TEXT NOT NULL,
+                 file_size_bytes INTEGER NOT NULL DEFAULT 0,
+                 mime_type TEXT,
+                 notes TEXT,
+                 uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+             );
+             INSERT INTO statutory_documents_new SELECT * FROM statutory_documents;
+             DROP TABLE statutory_documents;
+             ALTER TABLE statutory_documents_new RENAME TO statutory_documents;
+             COMMIT;"
+        );
     }
 
     log::info!("Database schema migrations applied successfully with NPCRS compliance and tamper-evident audit additions.");

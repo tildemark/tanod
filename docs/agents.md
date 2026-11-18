@@ -8,10 +8,10 @@ This project was pivoted from an existing Next.js prototype. All cloud dependenc
 
 * **Frontend:** SvelteKit (with `@sveltejs/adapter-static` for SPA mode), TypeScript, Tailwind CSS v4.
 * **UI Components:** lucide-svelte icons, svelte-dnd-action (Kanban boards), TanStack Table (data grids).
-* **Form Validation:** sveltekit-superforms with zod.
+* **Form Validation:** Svelte 5 Runes with Zod (`processSchema.safeParse()`).
 * **Backend / OS Bridge:** Tauri v2 (Rust) for native Windows APIs, dialogs, and IPC.
-* **Database:** Local SQLite using the `rusqlite` crate (bundled with SQLCipher for AES-256 encryption at rest).
-* **PDF Engine:** Native `typst` crate in Rust for export generation.
+* **Database:** Local SQLite using the `rusqlite` crate (bundled SQLite with WAL mode, foreign key enforcement, and SHA-256 hash chaining).
+* **PDF & Document Engine:** Audit-ready print-to-PDF export generation with formal institutional letterheads and statutory attestation blocks (PIAs, ASIRs, Policies).
 * **Reactivity:** Svelte 5 runes (`$state`, `$derived`, `$effect`) — do NOT use Svelte 4 `$:` reactive declarations.
 
 ---

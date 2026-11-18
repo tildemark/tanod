@@ -16,10 +16,15 @@
     Users
   } from 'lucide-svelte';
   import { getVersion } from '@tauri-apps/api/app';
+  import { isTauriApp } from '$lib/api/client';
 
-  let appVersion = $state('...');
+  let appVersion = $state('1.1.0');
   $effect(() => {
-    getVersion().then(v => { appVersion = v; });
+    if (isTauriApp()) {
+      getVersion().then(v => { appVersion = v; }).catch(() => { appVersion = '1.1.0'; });
+    } else {
+      appVersion = '1.1.0';
+    }
   });
 
   let currentPath = $derived($page.url.pathname);

@@ -4,6 +4,7 @@
   import { listProcesses } from '$lib/api/ropa';
   import { getOrganization } from '$lib/api/admin';
   import type { PiaAssessment, SavePiaPayload } from '$lib/types/pia';
+  import { THRESHOLD_QUESTIONS } from '$lib/types/pia';
   import type { Process } from '$lib/types/ropa';
   import PiaWizard from '$lib/components/pia/PiaWizard.svelte';
   import {
@@ -27,6 +28,7 @@
 
   let assessments = $state<PiaAssessment[]>([]);
   let processes = $state<Process[]>([]);
+  let org = $state<any>(null);
   let isLoading = $state(true);
   let statusMessage = $state<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -49,10 +51,11 @@
   async function loadData() {
     try {
       isLoading = true;
-      const org = await getOrganization();
+      const fetchedOrg = await getOrganization();
+      org = fetchedOrg;
       const [fetchedAssessments, fetchedProcesses] = await Promise.all([
-        listPiaAssessments(org.id),
-        listProcesses(org.id)
+        listPiaAssessments(fetchedOrg.id),
+        listProcesses(fetchedOrg.id)
       ]);
       assessments = fetchedAssessments;
       processes = fetchedProcesses;
@@ -134,7 +137,117 @@
   }
 
   function handlePrintDossier(a: PiaAssessment) {
-    window.print();
+    const proc = processes.find(p => p.id === a.process_id);
+    const dateFormatted = new Date(a.created_at || Date.now()).toLocaleDateString('en-PH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const thresholdList = THRESHOLD_QUESTIONS.map(q => {
+      const ans = a.threshold_answers?.[q.id];
+      const isYes = ans === true || ans === 'YES' || ans === 'true';
+      return `<tr>
+        <td><strong>${q.question}</strong><br/><small style="color:#64748b;">${q.reference}</small></td>
+        <td style="text-align:center; font-weight:bold; color: ${isYes ? '#dc2626' : '#16a34a'};">
+          ${isYes ? 'YES' : 'NO'}
+        </td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>PIA Dossier — ${a.process_title || 'Processing Activity'}</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10pt; color: #0f172a; margin: 0; padding: 28px; line-height: 1.5; }
+  h1 { font-size: 15pt; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+  h2 { font-size: 11pt; background: #0f172a; color: #fff; padding: 6px 12px; margin: 20px 0 10px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 9pt; }
+  th { background: #f8fafc; text-align: left; padding: 6px 10px; border: 1px solid #cbd5e1; font-weight: 600; }
+  td { padding: 6px 10px; border: 1px solid #e2e8f0; vertical-align: top; }
+  .meta-box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; margin-bottom: 16px; background: #f8fafc; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 8.5pt; font-family: monospace; }
+  .badge-high { background: #ffe4e6; color: #9f1239; border: 1px solid #fecdd3; }
+  .badge-medium { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+  .badge-low { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+  .cert { margin-top: 36px; border-top: 2px solid #0f172a; padding-top: 16px; page-break-inside: avoid; }
+  .cert-row { display: flex; gap: 40px; margin-top: 24px; }
+  .cert-field { flex: 1; border-bottom: 1px solid #475569; min-height: 28px; font-size: 9.5pt; }
+  .cert-label { font-size: 8pt; color: #64748b; margin-top: 4px; text-transform: uppercase; font-weight: 600; }
+  @media print { @page { size: A4; margin: 16mm; } body { padding: 0; } }
+</style>
+</head><body>
+<div style="border-bottom: 2px solid #0f172a; padding-bottom: 8px; margin-bottom: 14px; text-align: center;">
+  <div style="font-size: 8pt; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #64748b;">Republic of the Philippines • National Privacy Commission Compliance Dossier</div>
+  <h1>Privacy Impact Assessment (PIA) Report</h1>
+  <div style="font-size: 9pt; color: #475569;">${org?.name || 'Personal Information Controller (PIC)'} • NPC Reg: ${org?.npc_registration_number || 'N/A'}</div>
+</div>
+
+<div class="meta-box">
+  <table style="margin:0; border:none;">
+    <tr style="border:none;"><td style="border:none; width:50%;"><strong>Processing Activity:</strong> ${a.process_title || 'N/A'}</td><td style="border:none;"><strong>Department / Division:</strong> ${a.department_name || 'Organization-wide'}</td></tr>
+    <tr style="border:none;"><td style="border:none;"><strong>Statutory Lawful Basis:</strong> ${proc?.lawful_basis?.join(', ') || 'N/A'}</td><td style="border:none;"><strong>Assessment Date:</strong> ${dateFormatted}</td></tr>
+    <tr style="border:none;"><td style="border:none;"><strong>Personal Data Categories:</strong> ${proc?.data_categories?.join(', ') || 'N/A'}</td><td style="border:none;"><strong>Data Subjects Evaluated:</strong> ${proc?.data_subjects?.join(', ') || 'N/A'}</td></tr>
+  </table>
+</div>
+
+<h2>Section 1: NPC Threshold Diagnostic Questionnaire</h2>
+<table>
+  <tr><th style="width:75%;">Statutory Threshold Trigger Criterion</th><th style="width:25%; text-align:center;">Evaluation Result</th></tr>
+  ${thresholdList}
+</table>
+
+<h2>Section 2: Personal Data Lifecycle Flow Analysis</h2>
+<table>
+  <tr><th style="width:25%;">Lifecycle Stage</th><th>Observed Architecture & Operating Safeguards</th></tr>
+  <tr><td><strong>1. Collection:</strong></td><td>${a.data_flow_details?.collection || 'Standard corporate ingestion pathways.'}</td></tr>
+  <tr><td><strong>2. Storage:</strong></td><td>${a.data_flow_details?.storage || 'Local encrypted databases and controlled on-premise infrastructure.'}</td></tr>
+  <tr><td><strong>3. Usage:</strong></td><td>${a.data_flow_details?.usage || 'Internal business processing strictly within declared purposes.'}</td></tr>
+  <tr><td><strong>4. Disclosure:</strong></td><td>${a.data_flow_details?.disclosure || 'Authorized third parties pursuant to lawful agreements.'}</td></tr>
+  <tr><td><strong>5. Disposal:</strong></td><td>${a.data_flow_details?.disposal || 'Secure sanitization and deletion per retention schedules.'}</td></tr>
+</table>
+
+<h2>Section 3: Official NPC 4×4 Risk Matrix Evaluation</h2>
+<table>
+  <tr><th>Impact Score (1–4)</th><th>Probability Score (1–4)</th><th>Risk Rating (1–16)</th><th>Final Classification</th></tr>
+  <tr>
+    <td style="font-size:11pt; font-weight:bold;">${a.impact_score} / 4</td>
+    <td style="font-size:11pt; font-weight:bold;">${a.probability_score} / 4</td>
+    <td style="font-size:11pt; font-weight:bold;">${a.risk_rating}</td>
+    <td>
+      <span class="badge ${a.risk_level === 'HIGH' ? 'badge-high' : a.risk_level === 'MEDIUM' ? 'badge-medium' : 'badge-low'}">
+        ${a.risk_level} RISK
+      </span>
+    </td>
+  </tr>
+</table>
+
+<h2>Section 4: Mandatory Mitigation Solutions & Controls</h2>
+<div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px; background: #fdfdfd; font-size: 9pt; line-height: 1.6;">
+  ${a.mitigation_solutions || 'No high-risk residual exposures identified. Standard organizational, technical, and physical safeguards in effect.'}
+</div>
+
+<div class="cert">
+  <div style="font-weight:bold; font-size:10pt;">DPO ATTESTATION & REGULATORY SIGN-OFF</div>
+  <p style="font-size:8pt; color:#64748b; margin-top:2px;">This Privacy Impact Assessment was conducted pursuant to RA 10173 and NPC Advisory 2017-03. All assessments represent bona fide representations of organizational technical and physical security measures.</p>
+  <div class="cert-row">
+    <div>
+      <div class="cert-field">${org?.dpo_name || 'Designated Data Protection Officer'}</div>
+      <div class="cert-label">Data Protection Officer (Signature over Printed Name)</div>
+    </div>
+    <div>
+      <div class="cert-field">${dateFormatted}</div>
+      <div class="cert-label">Attestation Date</div>
+    </div>
+  </div>
+</div>
+</body></html>`;
+
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { win.print(); }, 400);
+    }
   }
 </script>
 

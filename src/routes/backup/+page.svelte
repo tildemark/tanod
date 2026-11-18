@@ -149,7 +149,7 @@
 
 				<button
 					type="button"
-					on:click={handleExport}
+					onclick={handleExport}
 					disabled={isExporting}
 					class="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-xs flex items-center justify-center gap-2 cursor-pointer transition-all"
 				>
@@ -193,7 +193,7 @@
 						/>
 						<button
 							type="button"
-							on:click={handleInspect}
+							onclick={handleInspect}
 							disabled={isInspecting || !archivePathInput.trim()}
 							class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 cursor-pointer shadow-2xs"
 						>
@@ -213,7 +213,7 @@
 						</div>
 						<button
 							type="button"
-							on:click={handleRestore}
+							onclick={handleRestore}
 							disabled={isRestoring}
 							class="w-full mt-2 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold shadow-xs cursor-pointer flex items-center justify-center gap-2"
 						>

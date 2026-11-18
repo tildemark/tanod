@@ -15,10 +15,10 @@
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-dialog": "^2.0.0",
     "@tauri-apps/plugin-fs": "^2.0.0",
+    "@tauri-apps/plugin-notification": "^2.8.1",
     "clsx": "^2.1.1",
     "lucide-svelte": "^0.475.0",
     "svelte-dnd-action": "^0.9.79",
-    "sveltekit-superforms": "^2.31.0",
     "tailwind-merge": "^2.6.0",
     "xlsx": "^0.18.5",
     "zod": "^4.6.5"

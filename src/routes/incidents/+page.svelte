@@ -23,7 +23,8 @@
     ChevronRight,
     ChevronLeft,
     Download,
-    Info
+    Info,
+    Loader2
   } from 'lucide-svelte';
 
   let incidents = $state<Incident[]>([]);
@@ -42,6 +43,7 @@
 
   // Modal State
   let isCreateModalOpen = $state(false);
+  let isSavingIncident = $state(false);
   let editingIncident = $state<Incident | null>(null);
 
   // Form Fields
@@ -132,6 +134,7 @@
       return;
     }
 
+    isSavingIncident = true;
     try {
       if (editingIncident) {
         await updateIncident(editingIncident.id, {
@@ -167,6 +170,8 @@
       await loadData();
     } catch (e: any) {
       modalError = e?.toString() || 'Failed to record incident.';
+    } finally {
+      isSavingIncident = false;
     }
   }
 
@@ -206,6 +211,16 @@
 
   // ─── ASIR WIZARD STATE ─────────────────────────────────────────────────────
   let isAsirWizardOpen = $state(false);
+  let isAsirPreviewModalOpen = $state(false);
+
+  function openAsirPrintView() {
+    isAsirWizardOpen = false;
+    isAsirPreviewModalOpen = true;
+  }
+
+  function triggerPrint() {
+    window.print();
+  }
   let asirStep = $state(1); // 1 = summary, 2 = AIC breakdown, 3 = attack vectors, 4 = review
   let asirYear = $state(new Date().getFullYear() - 1); // ASIR covers prior calendar year
 
@@ -351,100 +366,7 @@
   let org = $state<Organization | null>(null);
 
   function exportAsirPdf() {
-    const totalIncidents = asirMandatoryCount + asirVoluntaryCount + asirOtherCount;
-    const yearStart = new Date(`${asirYear}-01-01`).getTime();
-    const yearEnd = new Date(`${asirYear}-12-31T23:59:59`).getTime();
-    const yearIncidents = incidents.filter(i => {
-      const d = new Date(i.incident_date).getTime();
-      return d >= yearStart && d <= yearEnd;
-    });
-
-    const incidentRows = yearIncidents.map(i => `
-      <tr>
-        <td>${i.incident_date}</td>
-        <td>${i.title}</td>
-        <td><span class="sev-${i.severity.toLowerCase()}">${i.severity}</span></td>
-        <td>${i.impacted_individuals || 0}</td>
-        <td>${i.is_notifiable_breach ? 'YES' : 'NO'}</td>
-        <td>${i.npc_notified ? 'YES' : 'NO'}</td>
-        <td>${i.status}</td>
-      </tr>`).join('');
-
-    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>ASIR ${asirYear} — ${org?.name || 'Organization'}</title>
-<style>
-  body { font-family: Arial, sans-serif; font-size: 10pt; color: #111; margin: 0; padding: 24px; }
-  h1 { font-size: 14pt; margin-bottom: 2px; }
-  h2 { font-size: 11pt; background: #1e293b; color: #fff; padding: 6px 10px; margin: 18px 0 8px; border-radius: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 9pt; }
-  th { background: #f1f5f9; text-align: left; padding: 5px 8px; border: 1px solid #cbd5e1; }
-  td { padding: 4px 8px; border: 1px solid #e2e8f0; }
-  .meta { color: #475569; font-size: 9pt; margin-bottom: 16px; }
-  .sev-critical { color: #dc2626; font-weight: bold; }
-  .sev-high { color: #ea580c; font-weight: bold; }
-  .sev-medium { color: #d97706; }
-  .sev-low { color: #64748b; }
-  .cert { margin-top: 32px; border-top: 1px solid #cbd5e1; padding-top: 16px; }
-  .cert-row { display: flex; gap: 40px; margin-top: 12px; }
-  .cert-field { flex: 1; border-bottom: 1px solid #94a3b8; padding-bottom: 2px; min-height: 24px; font-size: 9pt; }
-  .cert-label { font-size: 8pt; color: #64748b; margin-top: 3px; }
-  @media print { @page { size: A4; margin: 18mm 18mm 18mm 18mm; } }
-</style>
-</head><body>
-<h1>Annual Security Incident Report (ASIR)</h1>
-<div class="meta">
-  <strong>Reporting Year:</strong> ${asirYear} &nbsp;|&nbsp;
-  <strong>Organization:</strong> ${org?.name || 'N/A'} &nbsp;|&nbsp;
-  <strong>Entity Type:</strong> ${org?.entity_type || 'PIC'} &nbsp;|&nbsp;
-  <strong>NPC Reg. No.:</strong> ${org?.npc_registration_number || 'N/A'}<br/>
-  <strong>City/Municipality:</strong> ${org?.city || 'N/A'} &nbsp;|&nbsp;
-  <strong>Date Generated:</strong> ${new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}
-</div>
-<h2>Section 1: Incident Summary</h2>
-<table><tr><th>Category</th><th>Count</th></tr>
-  <tr><td>Mandatory Breach Notifications (NPC Circular 16-03)</td><td>${asirMandatoryCount}</td></tr>
-  <tr><td>Voluntary Breach Notifications</td><td>${asirVoluntaryCount}</td></tr>
-  <tr><td>Other Security Incidents (Non-breach)</td><td>${asirOtherCount}</td></tr>
-  <tr><td><strong>TOTAL</strong></td><td><strong>${totalIncidents}</strong></td></tr>
-</table>
-<h2>Section 2: Impact Classification (AIC)</h2>
-<table><tr><th>Type</th><th>Count</th></tr>
-  <tr><td>Availability Incidents</td><td>${asirAvailabilityCount}</td></tr>
-  <tr><td>Integrity Incidents</td><td>${asirIntegrityCount}</td></tr>
-  <tr><td>Confidentiality Incidents</td><td>${asirConfidentialityCount}</td></tr>
-</table>
-<h2>Section 3: Attack Vector Breakdown</h2>
-<table><tr><th>Vector</th><th>Count</th></tr>
-  <tr><td>Theft (Physical Device/Media)</td><td>${asirTheft}</td></tr>
-  <tr><td>Unauthorized Access</td><td>${asirUnauthorizedAccess}</td></tr>
-  <tr><td>Hacking / Malware</td><td>${asirHackingMalware}</td></tr>
-  <tr><td>Phishing / Social Engineering</td><td>${asirPhishing}</td></tr>
-  <tr><td>Insider Threat / Misuse</td><td>${asirInsiderThreat}</td></tr>
-  <tr><td>Physical Loss / Damage</td><td>${asirPhysicalLoss}</td></tr>
-  <tr><td>System Error / Technical Failure</td><td>${asirSystemError}</td></tr>
-  <tr><td>Other</td><td>${asirOtherVector}</td></tr>
-</table>
-<h2>Section 4: Incident Registry</h2>
-<table><tr><th>Date</th><th>Title</th><th>Severity</th><th>Impacted</th><th>Notifiable</th><th>NPC Notified</th><th>Status</th></tr>
-  ${incidentRows || '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No incidents for reporting year</td></tr>'}
-</table>
-<div class="cert">
-  <strong>CERTIFICATION</strong>
-  <div class="cert-row">
-    <div><div class="cert-field">${asirCertifierName || ''}</div><div class="cert-label">Certified by (Name)</div></div>
-    <div><div class="cert-field">${asirCertifierTitle || ''}</div><div class="cert-label">Designation</div></div>
-    <div><div class="cert-field">${new Date().toLocaleDateString('en-PH')}</div><div class="cert-label">Date</div></div>
-  </div>
-</div>
-</body></html>`;
-
-    const win = window.open('', '_blank');
-    if (win) {
-      win.document.write(html);
-      win.document.close();
-      win.focus();
-      setTimeout(() => { win.print(); }, 400);
-    }
-    isAsirWizardOpen = false;
+    openAsirPrintView();
   }
 
 </script>
@@ -781,9 +703,15 @@
         </button>
         <button
           onclick={handleSaveIncident}
-          class="px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all cursor-pointer shadow-xs"
+          disabled={isSavingIncident}
+          class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition-all cursor-pointer shadow-xs disabled:opacity-60"
         >
-          {editingIncident ? 'Update Incident' : 'Record Incident'}
+          {#if isSavingIncident}
+            <Loader2 class="h-3.5 w-3.5 animate-spin" />
+            <span>{editingIncident ? 'Updating...' : 'Recording...'}</span>
+          {:else}
+            <span>{editingIncident ? 'Update Incident' : 'Record Incident'}</span>
+          {/if}
         </button>
       </div>
     </div>
@@ -1122,10 +1050,245 @@
               class="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
             >
               <FileSpreadsheet class="h-3.5 w-3.5" />
-              Export PDF Report
+              Preview & Save / Print PDF
             </button>
           </div>
         {/if}
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- Printable ASIR Official Document Modal -->
+{#if isAsirPreviewModalOpen}
+  {@const totalIncidents = asirMandatoryCount + asirVoluntaryCount + asirOtherCount}
+  {@const yearStart = new Date(`${asirYear}-01-01`).getTime()}
+  {@const yearEnd = new Date(`${asirYear}-12-31T23:59:59`).getTime()}
+  {@const yearIncidents = incidents.filter(i => {
+    const d = new Date(i.incident_date).getTime();
+    return d >= yearStart && d <= yearEnd;
+  })}
+
+  <div class="asir-modal-backdrop fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="asir-modal-card bg-white border border-slate-200 rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto p-8 shadow-2xl space-y-6 my-6">
+      
+      <!-- Top Action Bar (Hidden during print) -->
+      <div class="print:hidden flex items-center justify-between border-b border-slate-100 pb-4">
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-xs font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            ASIR-{asirYear}
+          </span>
+          <span class="text-xs text-slate-500 font-medium">NPC Circular 16-03 Compliance Document</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            onclick={triggerPrint}
+            class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Download class="w-4 h-4" />
+            Save as PDF / Print
+          </button>
+          <button
+            type="button"
+            aria-label="Close ASIR document preview"
+            onclick={() => isAsirPreviewModalOpen = false}
+            class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Formal ASIR Printable Letterhead Layout -->
+      <div class="asir-printable-doc bg-white text-slate-900 p-8 sm:p-12 rounded-xl shadow-inner border border-slate-200 space-y-6 text-sm">
+        
+        <!-- Document Header -->
+        <div class="border-b-2 border-slate-900 pb-4 text-center">
+          <div class="text-xs uppercase font-extrabold tracking-widest text-slate-600">Republic of the Philippines • National Privacy Commission Compliance</div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-950 tracking-tight mt-1">
+            ANNUAL SECURITY INCIDENT REPORT (ASIR)
+          </h1>
+          <p class="text-xs font-semibold text-slate-700 mt-0.5">Pursuant to NPC Circular No. 16-03 (Personal Data Breach Management)</p>
+        </div>
+
+        <!-- Metadata Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-slate-50 p-4 rounded-lg border border-slate-200 print:bg-white print:border-slate-300">
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-bold">Reporting Year:</span>
+            <span class="font-bold text-slate-900">{asirYear}</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-bold">Organization / Entity:</span>
+            <span class="font-bold text-slate-900">{org?.name || 'Institutional DPO'}</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-bold">Entity Classification:</span>
+            <span class="font-bold text-slate-900">{org?.entity_type || 'PIC'}</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-bold">NPC Registration No.:</span>
+            <span class="font-mono font-bold text-slate-900">{org?.npc_registration_number || 'N/A'}</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-bold">City / Municipality:</span>
+            <span class="font-bold text-slate-900">{org?.city || 'N/A'}</span>
+          </div>
+          <div>
+            <span class="text-slate-500 block text-[10px] uppercase font-bold">Generation Date:</span>
+            <span class="font-bold text-slate-900">{new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
+        </div>
+
+        <!-- Section 1: Incident Summary -->
+        <div class="space-y-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white bg-slate-900 px-3 py-1.5 rounded print:text-black print:bg-slate-100">
+            Section 1: Incident Summary (Preceding Calendar Year)
+          </h2>
+          <table class="w-full text-xs border-collapse border border-slate-200">
+            <thead>
+              <tr class="bg-slate-100 text-slate-800">
+                <th class="p-2 border border-slate-200 text-left">Incident Category</th>
+                <th class="p-2 border border-slate-200 text-right w-24">Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="p-2 border border-slate-200">Mandatory Breach Notifications (Sec. 18 / 72-Hour Timer)</td>
+                <td class="p-2 border border-slate-200 text-right font-mono font-bold">{asirMandatoryCount}</td>
+              </tr>
+              <tr>
+                <td class="p-2 border border-slate-200">Voluntary Breach Notifications</td>
+                <td class="p-2 border border-slate-200 text-right font-mono font-bold">{asirVoluntaryCount}</td>
+              </tr>
+              <tr>
+                <td class="p-2 border border-slate-200">Other Security Incidents (Non-Notifiable / Contained)</td>
+                <td class="p-2 border border-slate-200 text-right font-mono font-bold">{asirOtherCount}</td>
+              </tr>
+              <tr class="bg-slate-50 font-bold">
+                <td class="p-2 border border-slate-200">TOTAL SECURITY INCIDENTS / BREACHES</td>
+                <td class="p-2 border border-slate-200 text-right font-mono font-black">{totalIncidents}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 2: AIC Impact Breakdown -->
+        <div class="space-y-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white bg-slate-900 px-3 py-1.5 rounded print:text-black print:bg-slate-100">
+            Section 2: Impact Classification (AIC Triad)
+          </h2>
+          <div class="grid grid-cols-3 gap-3 text-center">
+            <div class="p-3 border border-slate-200 rounded-lg">
+              <span class="text-[11px] text-slate-500 block">Availability</span>
+              <span class="text-lg font-bold font-mono text-slate-900">{asirAvailabilityCount}</span>
+            </div>
+            <div class="p-3 border border-slate-200 rounded-lg">
+              <span class="text-[11px] text-slate-500 block">Integrity</span>
+              <span class="text-lg font-bold font-mono text-slate-900">{asirIntegrityCount}</span>
+            </div>
+            <div class="p-3 border border-slate-200 rounded-lg">
+              <span class="text-[11px] text-slate-500 block">Confidentiality</span>
+              <span class="text-lg font-bold font-mono text-slate-900">{asirConfidentialityCount}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3: Attack Vectors -->
+        <div class="space-y-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white bg-slate-900 px-3 py-1.5 rounded print:text-black print:bg-slate-100">
+            Section 3: Attack Vector Breakdown
+          </h2>
+          <table class="w-full text-xs border-collapse border border-slate-200">
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="p-2 border border-slate-200">Theft (Physical Device / Media)</td>
+                <td class="p-2 border border-slate-200 text-right font-mono w-20">{asirTheft}</td>
+                <td class="p-2 border border-slate-200">Unauthorized Access</td>
+                <td class="p-2 border border-slate-200 text-right font-mono w-20">{asirUnauthorizedAccess}</td>
+              </tr>
+              <tr>
+                <td class="p-2 border border-slate-200">Hacking / Malware / Ransomware</td>
+                <td class="p-2 border border-slate-200 text-right font-mono">{asirHackingMalware}</td>
+                <td class="p-2 border border-slate-200">Phishing / Social Engineering</td>
+                <td class="p-2 border border-slate-200 text-right font-mono">{asirPhishing}</td>
+              </tr>
+              <tr>
+                <td class="p-2 border border-slate-200">Insider Threat / Misuse</td>
+                <td class="p-2 border border-slate-200 text-right font-mono">{asirInsiderThreat}</td>
+                <td class="p-2 border border-slate-200">Physical Loss / Damage</td>
+                <td class="p-2 border border-slate-200 text-right font-mono">{asirPhysicalLoss}</td>
+              </tr>
+              <tr>
+                <td class="p-2 border border-slate-200">System Error / Technical Failure</td>
+                <td class="p-2 border border-slate-200 text-right font-mono">{asirSystemError}</td>
+                <td class="p-2 border border-slate-200">Other Attack Vectors</td>
+                <td class="p-2 border border-slate-200 text-right font-mono">{asirOtherVector}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Section 4: Incident Registry List -->
+        <div class="space-y-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-white bg-slate-900 px-3 py-1.5 rounded print:text-black print:bg-slate-100">
+            Section 4: Incident Log Table
+          </h2>
+          <table class="w-full text-[11px] border-collapse border border-slate-200">
+            <thead>
+              <tr class="bg-slate-100 text-slate-800">
+                <th class="p-1.5 border border-slate-200 text-left">Date</th>
+                <th class="p-1.5 border border-slate-200 text-left">Incident Title</th>
+                <th class="p-1.5 border border-slate-200 text-center">Severity</th>
+                <th class="p-1.5 border border-slate-200 text-center">Impacted</th>
+                <th class="p-1.5 border border-slate-200 text-center">Notifiable</th>
+                <th class="p-1.5 border border-slate-200 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#if yearIncidents.length === 0}
+                <tr>
+                  <td colspan="6" class="p-3 text-center text-slate-500 italic border border-slate-200">
+                    No security incidents or data breaches recorded for reporting year {asirYear} (Zero-Incident Attestation).
+                  </td>
+                </tr>
+              {:else}
+                {#each yearIncidents as inc}
+                  <tr>
+                    <td class="p-1.5 border border-slate-200 whitespace-nowrap">{inc.incident_date}</td>
+                    <td class="p-1.5 border border-slate-200 font-semibold">{inc.title}</td>
+                    <td class="p-1.5 border border-slate-200 text-center">{inc.severity}</td>
+                    <td class="p-1.5 border border-slate-200 text-center font-mono">{inc.impacted_individuals || 0}</td>
+                    <td class="p-1.5 border border-slate-200 text-center">{inc.is_notifiable_breach ? 'YES' : 'NO'}</td>
+                    <td class="p-1.5 border border-slate-200 text-center">{inc.status}</td>
+                  </tr>
+                {/each}
+              {/if}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Statutory Certification -->
+        <div class="pt-6 border-t-2 border-slate-300 space-y-4">
+          <div class="text-xs font-semibold uppercase tracking-wider text-slate-800">
+            Official Certification & Attestation
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed italic">
+            I hereby certify under penalty of law that the information provided in this Annual Security Incident Report (ASIR) is true, correct, and complete based on the security records, forensic logs, and breach register maintained by this organization pursuant to Republic Act No. 10173 and NPC Circular 16-03.
+          </p>
+
+          <div class="grid grid-cols-2 gap-8 pt-6">
+            <div class="border-t border-slate-800 pt-2 text-center">
+              <div class="font-bold text-slate-900 text-xs">{asirCertifierName || 'Authorized Certifying Officer'}</div>
+              <div class="text-[11px] text-slate-500">{asirCertifierTitle || 'Data Protection Officer / Head of Agency'}</div>
+            </div>
+            <div class="border-t border-slate-800 pt-2 text-center">
+              <div class="font-bold text-slate-900 text-xs">{new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+              <div class="text-[11px] text-slate-500">Date of Attestation</div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import type { Process, ProcessFormData } from '$lib/types/ropa';
+import { processSchema, type Process, type ProcessFormData } from '$lib/types/ropa';
 import type { Department } from '$lib/types/organization';
 import { DATA_SUBJECTS, DATA_CATEGORIES, LAWFUL_BASIS, RECIPIENTS } from '$lib/types/ropa';
 
@@ -156,7 +156,7 @@ export async function parseRopaExcelFile(
     const status: 'DRAFT' | 'REVIEW' | 'APPROVED' =
       rawStatus === 'APPROVED' ? 'APPROVED' : rawStatus === 'REVIEW' ? 'REVIEW' : 'DRAFT';
 
-    validProcesses.push({
+    const candidate = {
       dept_id: resolvedDeptId,
       title,
       description: description || undefined,
@@ -166,7 +166,89 @@ export async function parseRopaExcelFile(
       recipients,
       retention_period,
       status
-    });
+    };
+
+    const parsed = processSchema.safeParse(candidate);
+    if (parsed.success) {
+      validProcesses.push(parsed.data);
+    } else {
+      errors.push(`Row ${rowNum} ("${title}"): ${parsed.error.issues[0]?.message || 'Invalid row data'}`);
+    }
+  });
+
+  return {
+    validProcesses,
+    errors,
+    deptMap: deptLookup
+  };
+}
+
+/**
+ * Parses an uploaded JSON file containing an array of ROPA process definitions.
+ */
+export async function parseRopaJsonFile(
+  file: File,
+  departments: Department[]
+): Promise<{ validProcesses: ProcessFormData[]; errors: string[]; deptMap: Record<string, string> }> {
+  const text = await file.text();
+  let json: any;
+  try {
+    json = JSON.parse(text);
+  } catch (err: any) {
+    return {
+      validProcesses: [],
+      errors: [`JSON Parse Error: ${err?.message || 'Invalid JSON syntax'}`],
+      deptMap: {}
+    };
+  }
+
+  const items = Array.isArray(json) ? json : json.processes || json.data || [];
+  if (!Array.isArray(items) || items.length === 0) {
+    return {
+      validProcesses: [],
+      errors: ['No processes found in JSON file. Expected an array of objects or { processes: [...] }.'],
+      deptMap: {}
+    };
+  }
+
+  const deptLookup: Record<string, string> = {};
+  for (const dept of departments) {
+    deptLookup[dept.name.trim().toLowerCase()] = dept.id;
+  }
+  const defaultDeptId = departments[0]?.id ?? '';
+
+  const validProcesses: ProcessFormData[] = [];
+  const errors: string[] = [];
+
+  items.forEach((item, idx) => {
+    const itemNum = idx + 1;
+    let deptId = defaultDeptId;
+    if (item.dept_id) {
+      deptId = item.dept_id;
+    } else if (item.department_name && deptLookup[String(item.department_name).trim().toLowerCase()]) {
+      deptId = deptLookup[String(item.department_name).trim().toLowerCase()];
+    } else if (item.department && deptLookup[String(item.department).trim().toLowerCase()]) {
+      deptId = deptLookup[String(item.department).trim().toLowerCase()];
+    }
+
+    const candidate = {
+      dept_id: deptId,
+      title: String(item.title || item.name || '').trim(),
+      description: item.description ? String(item.description).trim() : undefined,
+      data_subjects: Array.isArray(item.data_subjects) ? item.data_subjects.map(String) : [],
+      data_categories: Array.isArray(item.data_categories) ? item.data_categories.map(String) : [],
+      lawful_basis: Array.isArray(item.lawful_basis) ? item.lawful_basis.map(String) : [],
+      recipients: Array.isArray(item.recipients) ? item.recipients.map(String) : [],
+      retention_period: String(item.retention_period || '5 years following conclusion of transaction').trim(),
+      status: ['DRAFT', 'REVIEW', 'APPROVED'].includes(item.status) ? item.status : 'DRAFT'
+    };
+
+    const parsed = processSchema.safeParse(candidate);
+    if (parsed.success) {
+      validProcesses.push(parsed.data);
+    } else {
+      errors.push(`Item ${itemNum} ("${candidate.title || 'Untitled'}"): ${parsed.error.issues[0]?.message || 'Invalid process format'}`);
+    }
   });
 
   return {

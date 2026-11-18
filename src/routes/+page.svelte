@@ -12,6 +12,7 @@
   import type { Process } from '$lib/types/ropa';
   import type { StatutoryDocument } from '$lib/types/vault';
   import type { DataSharingAgreement } from '$lib/types/dsa';
+  import { notifyDpo } from '$lib/services/notificationService';
   import {
     FolderLock, ShieldAlert, Clock, UserCheck, ArrowUpRight,
     Building2, ShieldCheck, Calendar, Award, FileSpreadsheet,
@@ -186,7 +187,7 @@
     { id: 'SECRETARY_CERTIFICATE', label: "Corporate Secretary's Certificate", check: (docs: StatutoryDocument[]) => docs.some(d => d.category === 'SECRETARY_CERTIFICATE' || d.category === 'BOARD_RESOLUTION') },
     { id: 'NPC_REGISTRATION_CERT', label: 'NPC Certificate of Registration', check: (docs: StatutoryDocument[]) => docs.some(d => d.category === 'NPC_REGISTRATION_CERT') },
     { id: 'NPC_SEAL_OF_REGISTRATION', label: 'Official NPC Seal of Registration', check: (docs: StatutoryDocument[]) => docs.some(d => d.category === 'NPC_SEAL_OF_REGISTRATION') },
-    { id: 'BUSINESS_PERMIT', label: 'Current LGU Business Permit', check: (docs: StatutoryDocument[]) => docs.some(d => d.year === currentYear && d.category === 'OTHER_COMPLIANCE' && d.title.toLowerCase().includes('permit')) },
+    { id: 'BUSINESS_PERMIT', label: 'Current LGU Business Permit', check: (docs: StatutoryDocument[]) => docs.some(d => d.year === currentYear && (d.category === 'BUSINESS_PERMIT' || (d.category === 'OTHER_COMPLIANCE' && d.title.toLowerCase().includes('permit')))) },
     { id: 'ASIR_PROOF', label: 'Annual Security Incident Report (ASIR)', check: (docs: StatutoryDocument[]) => docs.some(d => d.year === currentYear && d.category === 'OTHER_COMPLIANCE' && d.title.toLowerCase().includes('asir')) },
   ];
 
@@ -241,6 +242,20 @@
       else if (aDays < 0) asirStatus = { text: `Overdue by ${Math.abs(aDays)} days!`, color: 'text-rose-700 bg-rose-50 border-rose-200' };
       else if (aDays <= 45) asirStatus = { text: `${aDays} Days (Due March 31)`, color: 'text-amber-700 bg-amber-50 border-amber-200' };
       else asirStatus = { text: `${aDays} Days Remaining`, color: 'text-slate-700 bg-slate-100 border-slate-200' };
+
+      // Statutory OS Desktop Notifications
+      const unnotifiedBreaches = fetchedInc.filter(i => i.is_notifiable_breach && !i.npc_notified);
+      if (unnotifiedBreaches.length > 0) {
+        notifyDpo(
+          '⚠️ NPC Breach Clock Warning',
+          `${unnotifiedBreaches.length} open security breach(es) pending mandatory 72-hour NPC notification!`
+        );
+      } else if (overdueDsrs.length > 0) {
+        notifyDpo(
+          '⏳ Overdue Data Subject Rights SLA',
+          `${overdueDsrs.length} DSR request(s) have exceeded the statutory 30-day response window.`
+        );
+      }
     } catch (e) { console.error('Dashboard load error', e); }
     finally { isLoading = false; }
   });
